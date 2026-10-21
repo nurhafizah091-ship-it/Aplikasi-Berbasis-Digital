@@ -226,7 +226,8 @@ code{background:#eaf1ff;color:#1d4ed8}
 .gmc{background:#fff;border-color:#d8c9fb;box-shadow:0 4px 16px #a78bfa24}
 .gmb i{color:#3f4f73;border-color:#b9cdf3}
 @media(max-width:860px){nav{border-bottom:1px solid #d3e0f6}}
-</style></head><body><div id="app"></div><div id="m" onclick="if(event.target==this)cm()"></div><div id="pr"></div><div id="cp"></div><div id="dev">Pengembang : <b>Abd. Pandrik Lesi, S.Pd.,Gr.</b> &nbsp;|&nbsp; Versi 2026.1</div>
+</style><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0f172a"><link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ABD Sekolah">
+</head><body><div id="app"></div><div id="m" onclick="if(event.target==this)cm()"></div><div id="pr"></div><div id="cp"></div><div id="dev">Pengembang : <b>Abd. Pandrik Lesi, S.Pd.,Gr.</b> &nbsp;|&nbsp; Versi 2026.1</div>
 <script>
 const $=s=>document.querySelector(s),uid=()=>Math.random().toString(36).slice(2,8),today=()=>new Date().toISOString().slice(0,10);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -894,7 +895,7 @@ if(!r.ok){let t='';try{t=(await r.json()).msg||''}catch(x){}throw new Error(t||'
 cm();alert('Berhasil disimpan.'+(cE?'\nEmail masuk Anda sekarang: '+shownEm(me.role,e):'')+(cP?'\nGunakan kata sandi baru saat masuk berikutnya.':''))
 }catch(x){er(x.message+(cE?' (Ubah email memerlukan Edge Function buat-akun versi terbaru.)':''))}}
 /* ===== PEMILOS / PILKETOS ===== */
-const isKpus=()=>!!me&&(me.role=='admin'||db.nilai.some(x=>x.jenis=='eg_role'&&x.siswa==me.id&&x.ket=='pustaka|-'&&x.tahun==TH)),menuOk=m=>(m[0]!='pilketos'||isPemb())&&(m[0]!='pkpinjam'||isKpus())&&(m[0]!='pklap'||isKpus()||me.role=='kepsek');
+const isKpus=()=>!!me&&(me.role=='admin'||db.nilai.some(x=>x.jenis=='eg_role'&&x.siswa==me.id&&x.ket=='pustaka|-'&&x.tahun==TH)),menuOk=m=>{const k=m[0];if(/^pk/.test(k))return PKF&&(k!='pkpinjam'||isKpus())&&(k!='pklap'||isKpus()||me.role=='kepsek');if(PKF)return false;return k!='pilketos'||isPemb()};
 const isPemb=()=>!!me&&(me.role=='admin'||db.nilai.some(x=>x.jenis=='eg_role'&&x.siswa==me.id&&x.ket=='osis|-'&&x.tahun==TH));
 const plJ=(r,d)=>{try{return{...d,...JSON.parse(r)}}catch(e){return d}};
 const plCfg=()=>{const r=db.nilai.find(x=>x.jenis=='pl_cfg'&&x.tahun==TH);return plJ(r&&r.ket,{})&&{judul:'Pemilihan Ketua & Wakil Ketua OSIS',status:'draft',umum:false,...plJ(r&&r.ket,{})}};
@@ -1211,4 +1212,5 @@ return(h||'<p class="mu" style="margin:6px 0">Belum ada jadwal dengan hari dan j
 function jgCard(){if(!jgList().length)return'';return`<div class="card"><div class="row np" style="align-items:center;justify-content:space-between"><h3 style="margin:0">🗓️ Jadwal Mengajar Saya</h3><span><button class="b g s" onclick="jpop()">Tampilkan pop up</button> <button class="b s" onclick="go('jadwal')">Atur jadwal</button></span></div>${jgBody()}</div>`}
 function jpop(){if(!me||me.role!='guru')return;JPD=true;if(!jgList().length)return;md(`<h3>🗓️ Jadwal Mengajar Anda</h3><p class="mu">${esc(me.nama)} · Tahun ajaran ${esc(nm('tahun',TH))}</p>${jgBody()}<div class="row"><button class="b" onclick="cm()">Tutup</button><button class="b g" onclick="cm();go('jadwal')">Atur jadwal</button></div>`)}
 P.nilai=()=>me.role=='guru'?egPage():me.role=='admin'?egAdmin():erPage();boot();
-</script></body></html>
+</script><script>if('serviceWorker'in navigator&&location.protocol.indexOf('http')==0)addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})</script>
+</body></html>
