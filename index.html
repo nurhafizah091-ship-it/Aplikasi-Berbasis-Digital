@@ -724,16 +724,12 @@ return`<div class="card hero"><div class="hr"><div><span class="mu">Selamat data
 function welcome(){const p=PF();if(!p.nama||me.role=='kepsek')return;md(`<div style="text-align:center"><span class="mu">Selamat datang, ${esc(me.nama)}</span><h3 style="font-size:20px;margin:6px 0">${esc(p.nama)}</h3><p class="mu">${esc([p.alamat,p.kota].filter(Boolean).join(', '))}</p><p>Kepala Sekolah<br><b>${esc(p.kepsek||'-')}</b>${p.nip_kepsek?'<br><span class="mu">NIP '+esc(p.nip_kepsek)+'</span>':''}</p><button class="b" onclick="cm();${me.role=='guru'?'jpop()':''}">Masuk</button></div>`)}
 const PFF=[['nama','Nama sekolah'],['npsn','NPSN'],['alamat','Alamat'],['kota','Kota / Kabupaten (untuk tanggal cetak)'],['telp','Telepon'],['email','Email'],['kepsek','Nama kepala sekolah'],['nip_kepsek','NIP kepala sekolah']];
 function profSave(){const v={};PFF.forEach(f=>v[f[0]]=$('#pf_'+f[0]).value.trim());if(!v.nama)return alert('Nama sekolah wajib diisi.');if(db.profil.length)Object.assign(db.profil[0],v);else db.profil.push({id:'sekolah',...v});save();alert('Profil sekolah tersimpan.');draw()}
-const logoOf=()=>{const l=PF().logo;return /^data:image\/(png|jpeg|webp);base64,/.test(l||'')?l:''};
+const logoOf=()=>{const l=PF().logo;return /^data:image\/(png|jpeg|webp);base64,/.test(l||'')||/^https:\/\//.test(l||'')?l:''};
 const kopHTML=(p,nl)=>{if(TUF)return tuKopHTML();const L=nl?'':logoOf(),t=`<b>${esc(p.nama||'Nama Sekolah')}</b><div>${esc([p.alamat,p.kota].filter(Boolean).join(', '))}</div><div>${esc([p.npsn&&'NPSN '+p.npsn,p.telp&&'Telp. '+p.telp,p.email].filter(Boolean).join(' · '))}</div>`;return L?`<div class="kop" style="display:flex;align-items:center;gap:10px"><div style="width:84px;height:84px;flex:none"><img src="${L}" alt="Logo sekolah" width="84" height="84" style="width:84px;height:84px;object-fit:contain"></div><div style="flex:1">${t}</div><div style="width:84px;flex:none"></div></div>`:`<div class="kop">${t}</div>`};
 const kopDoc=(p,ex)=>{if(TUF)return tuKopDoc(ex);const L=logoOf(),t=`<h2 style="text-align:center;margin:0">${esc(p.nama||'')}</h2><p style="text-align:center;margin:2px 0 ${ex?10:8}px">${esc([p.alamat,p.kota].filter(Boolean).join(', '))}${ex?'<br>'+ex:''}</p>`;return L?`<table style="width:100%;border:0;border-collapse:collapse"><tr><td style="width:90px;border:0;text-align:center;vertical-align:middle"><img src="${L}" width="80" height="80" alt="Logo sekolah"></td><td style="border:0;vertical-align:middle">${t}</td><td style="width:90px;border:0"></td></tr></table><hr>`:t+'<hr>'};
 const logoCardInner=()=>{const L=logoOf();return`<h3>Logo Sekolah</h3><p class="mu">Logo tampil pada kop semua laporan yang dicetak atau diunduh (PDF dan Word) serta sampul rapor. Gunakan PNG berlatar transparan atau JPG, sebaiknya berbentuk persegi.</p><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div style="width:96px;height:96px;border:1px dashed var(--bd);border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fff;flex:none">${L?`<img src="${L}" alt="Logo sekolah" style="max-width:88px;max-height:88px">`:'<span style="font-size:12px;color:#64748b;text-align:center">Belum ada logo</span>'}</div><div><label style="margin:0">Pilih berkas logo<input type="file" accept="image/png,image/jpeg,image/webp" onchange="logoUp(this)"></label>${L?'<button class="b d s np" style="margin-top:8px" onclick="logoDel()">Hapus logo</button>':''}<p class="mu" style="font-size:12px;margin:6px 0 0">Gambar otomatis diperkecil dan dibuat persegi.</p></div></div>`};
 const logoRefresh=()=>{const e=$('#logoCard');if(e)e.innerHTML=logoCardInner()};
-function logoUp(inp){const f=inp.files[0];inp.value='';if(!f)return;if(!/^image\/(png|jpe?g|webp)$/.test(f.type))return alert('Pilih berkas gambar PNG atau JPG.');if(!db.profil.length||!PF().nama)return alert('Isi dan simpan nama sekolah dulu, lalu unggah logo.');
-const u=URL.createObjectURL(f),im=new Image();im.onerror=()=>{URL.revokeObjectURL(u);alert('Gambar tidak dapat dibaca. Gunakan berkas PNG atau JPG.')};
-im.onload=()=>{URL.revokeObjectURL(u);const S=256,k=Math.min(S/im.naturalWidth,S/im.naturalHeight),w=Math.round(im.naturalWidth*k),h=Math.round(im.naturalHeight*k),mk=bg=>{const c=document.createElement('canvas'),x=c.getContext('2d');c.width=c.height=S;if(bg){x.fillStyle=bg;x.fillRect(0,0,S,S)}x.imageSmoothingQuality='high';x.drawImage(im,(S-w)/2,(S-h)/2,w,h);return c};
-let d=mk().toDataURL('image/png');if(d.length>300000)d=mk('#fff').toDataURL('image/jpeg',.85);if(d.length>300000)return alert('Ukuran logo terlalu besar. Pakai gambar yang lebih sederhana.');
-db.profil[0].logo=d;save();logoRefresh()};im.src=u}
+async function logoUp(inp){const f=inp.files[0];inp.value='';if(!f)return;if(!/^image\/(png|jpe?g|webp)$/.test(f.type))return alert('Pilih berkas gambar PNG atau JPG.');if(!db.profil.length||!PF().nama)return alert('Isi dan simpan nama sekolah dulu, lalu unggah logo.');try{badge('Mengunggah logo ke database…');const marker=await driveUploadFile(f),meta=driveMeta(marker);if(!meta)throw new Error('Metadata berkas tidak valid.');db.profil[0].logo=driveImageUrl(meta.fileId);save();logoRefresh();badge('✓ Logo tersimpan; referensinya tercatat di database')}catch(e){badge('⚠ Unggah logo gagal',1);alert('Gagal mengunggah logo ke database: '+e.message)}}
 function logoDel(){if(!confirm('Hapus logo sekolah dari semua laporan?'))return;if(db.profil.length)db.profil[0].logo='';save();logoRefresh()}
 const P={
 dash,
@@ -783,7 +779,7 @@ async function gdata(tb,id){const r=db[tb].find(x=>x.id==id);if(!r)return null;i
 function fblob(d,name){const dm=d.slice(5,d.indexOf(';')),m=EXT[extOf(name)]||dm;return new Blob([d2b(d)],{type:SAFE.test(m)?m:'application/octet-stream'})}
 const fico=n=>{const e=extOf(n),t=EXT[e]||'';return t.startsWith('image/')?'🖼️':e=='pdf'?'📕':/^docx?$/.test(e)?'📘':/^xlsx?$|^csv$/.test(e)?'📗':/^pptx?$/.test(e)?'📙':t.startsWith('video/')?'🎬':t.startsWith('audio/')?'🎵':'📎'};
 const fchip=(tb,r)=>{const N=fnames(r);if(!N.length)return'';return`<div class="np" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">${N.map((n,i)=>`<span style="display:inline-flex;gap:4px;max-width:100%"><button class="b s" onclick="fview('${tb}','${r.id}',${i})" title="Klik untuk melihat berkas" style="max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fico(n)} ${esc(n)}</button><button class="b g s" onclick="dlf('${tb}','${r.id}',${i})">⬇ Unduh</button></span>`).join('')}</div>`};
-async function dlf(tb,id,ix){ix=ix||0;const r=db[tb].find(x=>x.id==id);if(!r)return;const FN=fnames(r)[ix]||r.file;if(tb=='materi')mlog(id);try{const d=await gdataAt(tb,id,ix);if(!d)return alert('Isi berkas tidak tersedia.');const a=document.createElement('a'),u=URL.createObjectURL(fblob(d,FN));a.href=u;a.download=FN||'berkas';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}catch(e){alert('Gagal mengunduh berkas: '+e.message)}}
+async function dlf(tb,id,ix){ix=ix||0;const r=db[tb].find(x=>x.id==id);if(!r)return;const FN=fnames(r)[ix]||r.file;if(tb=='materi')mlog(id);try{const d=await gdataAt(tb,id,ix);if(!d)return alert('Isi berkas tidak tersedia.');const dm=driveMeta(d);if(dm){const a=document.createElement('a');a.href=driveDownloadUrl(dm.fileId);a.target='_blank';a.rel='noopener';a.download=FN||dm.fileName||'berkas';document.body.appendChild(a);a.click();a.remove();return}const a=document.createElement('a'),u=URL.createObjectURL(fblob(d,FN));a.href=u;a.download=FN||'berkas';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}catch(e){alert('Gagal mengunduh berkas: '+e.message)}}
 function pvOpen(h){let e=$('#pv');if(!e){e=document.createElement('div');e.id='pv';e.style.cssText='position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;padding:14px;z-index:40';e.onclick=ev=>{if(ev.target==e)cpv()};document.body.appendChild(e)}e.innerHTML='<div class="mb" style="width:min(980px,100%)">'+h+'</div>';e.style.display='flex'}
 function cpv(){const e=$('#pv');if(e){e.style.display='none';e.innerHTML=''}if(PVU){const u=PVU;PVU=null;setTimeout(()=>URL.revokeObjectURL(u),60000)}}
 document.addEventListener('keydown',e=>{if(e.key=='Escape')cpv()});
@@ -809,6 +805,7 @@ return`<div style="max-height:65vh;overflow:auto">${h}</div><p class="mu" style=
 return''}
 async function fview(tb,id,ix){ix=ix||0;const r0=db[tb].find(x=>x.id==id);if(!r0)return;const NN=fnames(r0),r={...r0,file:NN[ix]||r0.file};if(tb=='materi')mlog(id);pvOpen('<p class="mu">Memuat berkas…</p>');
 try{const d=await gdataAt(tb,id,ix);if(!d){pvOpen('<p>Isi berkas tidak tersedia.</p><button class="b" onclick="cpv()">Tutup</button>');return}
+const dm=driveMeta(d);if(dm){const preview=drivePreviewUrl(dm.fileId);const isDriveVideo=String(dm.mimeType||'').startsWith('video/')||/\.(mp4|m4v|mov|avi|mkv|webm|3gp|mpeg|mpg)$/i.test(r.file||'');const videoNote=isDriveVideo?'<div class="card" style="margin:10px 0;padding:12px;border:1px solid var(--line,#ddd)"><b>Video sedang diproses?</b><p class="mu" style="font-size:13px;margin:6px 0">Jika video menampilkan pesan “This video file is still being processed for playback”, berkas mungkin sudah tersimpan meskipun pemutaran belum siap. Tunggu beberapa saat, lalu coba buka kembali atau unduh video.</p><a class="b g" href="https://drive.google.com/file/d/'+encodeURIComponent(dm.fileId)+'/view" target="_blank" rel="noopener" style="text-decoration:none">↗ Buka video</a> <a class="b" href="'+driveDownloadUrl(dm.fileId)+'" target="_blank" rel="noopener" style="text-decoration:none">⬇ Unduh video</a></div>':'';pvOpen(`<h3 style="word-break:break-all">${fico(r.file)} ${esc(r.file)}</h3><iframe src="${preview}" title="${esc(r.file)}" allow="autoplay" style="width:100%;height:70vh;border:0;border-radius:8px;background:#fff"></iframe>${videoNote}<p class="mu" style="font-size:12px">Pratinjau berkas sedang disediakan. Jika jenis berkas tidak mendukung pratinjau, gunakan Unduh.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${NN.length>1?`<button class="b g" onclick="fview('${tb}','${id}',${(ix+NN.length-1)%NN.length})">◀</button><span class="mu" style="align-self:center">${ix+1}/${NN.length}</span><button class="b g" onclick="fview('${tb}','${id}',${(ix+1)%NN.length})">▶</button>`:''}<button class="b" onclick="dlf('${tb}','${id}',${ix})">⬇ Unduh</button><a class="b g" href="${preview}" target="_blank" rel="noopener" style="text-decoration:none">↗ Buka di tab baru</a><button class="b g" onclick="cpv()">Tutup</button></div>`);return}
 cpv();const b=fblob(d,r.file),u=URL.createObjectURL(b),t=b.type;PVU=u;let v,ofu='';
 if(t.startsWith('image/'))v=`<img src="${u}" alt="${esc(r.file)}" style="max-width:100%;max-height:70vh;display:block;margin:0 auto;border-radius:8px">`;
 else if(t=='application/pdf')v=`<iframe src="${u}" title="${esc(r.file)}" style="width:100%;height:70vh;border:0;border-radius:8px;background:#fff"></iframe><p class="mu" style="font-size:12px">Jika PDF tidak tampil di perangkat ini, pakai "Buka di tab baru" atau "Unduh".</p>`;
@@ -820,12 +817,124 @@ else v='<p class="mu">Pratinjau belum tersedia untuk jenis berkas ini'+(/^(doc|p
 const nw=ofu?`<a class="b g" href="${ofu}" target="_blank" rel="noopener" style="text-decoration:none">↗ Buka di tab baru</a>`:t=='application/octet-stream'?'':`<a class="b g" href="${u}" target="_blank" rel="noopener" style="text-decoration:none">↗ Buka di tab baru</a>`;
 pvOpen(`<h3 style="word-break:break-all">${fico(r.file)} ${esc(r.file)}</h3>${v}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${NN.length>1?`<button class="b g" onclick="fview('${tb}','${id}',${(ix+NN.length-1)%NN.length})">◀</button><span class="mu" style="align-self:center">${ix+1}/${NN.length}</span><button class="b g" onclick="fview('${tb}','${id}',${(ix+1)%NN.length})">▶</button>`:''}<button class="b" onclick="dlf('${tb}','${id}',${ix})">⬇ Unduh</button>${nw}<button class="b g" onclick="cpv()">Tutup</button></div>`)}
 catch(e){pvOpen('<p>Gagal memuat berkas: '+esc(e.message)+'</p><button class="b" onclick="cpv()">Tutup</button>')}}
-/* Baca berkas jadi data URL. Foto besar (JPG/PNG/WebP) dikecilkan otomatis agar muat. */
-function rd(f,ok,lim0,fail){const lim=lim0||LIM(),big=()=>{alert('Ukuran berkas "'+f.name+'" terlalu besar. Maksimal '+(lim/1e6)+' MB. Data tidak disimpan.');fail&&fail()},
-raw=()=>{if(f.size>lim)return big();const r=new FileReader();r.onload=()=>ok(r.result,f.name);r.onerror=()=>{alert('Berkas gagal dibaca. Data tidak disimpan.');fail&&fail()};r.readAsDataURL(f)};
-if(/^image\/(jpeg|png|webp)$/.test(f.type)&&f.size>4e5){const u=URL.createObjectURL(f),im=new Image();
-im.onload=()=>{URL.revokeObjectURL(u);const s=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas'),x=c.getContext('2d');c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);const d=c.toDataURL('image/jpeg',.82);if(d.length*.75>lim)return big();ok(d,f.name.replace(/\.[^.]+$/,'')+'.jpg')};
-im.onerror=()=>{URL.revokeObjectURL(u);raw()};im.src=u}else raw()}
+/* Lampiran baru: unggah seluruh jenis dan ukuran berkas melalui proses database. Metadata/ID disimpan di kolom data Supabase. */
+const DRIVE_MARK='#drive#';
+function driveMeta(value){if(typeof value!=='string'||!value.startsWith(DRIVE_MARK))return null;try{const m=JSON.parse(value.slice(DRIVE_MARK.length));return m&&m.fileId?m:null}catch(e){return null}}
+const drivePreviewUrl=id=>'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview';
+const driveDownloadUrl=id=>'https://drive.google.com/uc?export=download&id='+encodeURIComponent(id);
+const driveImageUrl=id=>'https://drive.google.com/uc?export=view&id='+encodeURIComponent(id);
+async function driveFetch(path,opts={},retry=true){const headers={apikey:SB.key,Authorization:'Bearer '+TK,...(opts.headers||{})};let r=await fetch(SB.url+'/functions/v1/'+path,{...opts,headers});if(r.status===401&&retry&&RT){await refresh();return driveFetch(path,opts,false)}const txt=await r.text();let j={};try{j=txt?JSON.parse(txt):{}}catch(e){j={error:txt}}if(!r.ok)throw new Error(j.error||j.message||('HTTP database '+r.status));return j}
+function ensureDriveProgressUI(){
+  if(document.getElementById('driveUploadProgress'))return;
+  const style=document.createElement('style');
+  style.id='driveUploadProgressStyle';
+  style.textContent=`
+  #driveUploadProgress{position:fixed;inset:0;z-index:999999;background:rgba(15,23,42,.62);display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(3px)}
+  #driveUploadProgress .dup-card{width:min(520px,100%);background:var(--card,#fff);color:var(--text,#172033);border-radius:18px;padding:24px;box-shadow:0 22px 70px rgba(0,0,0,.3);border:1px solid rgba(120,130,150,.22)}
+  #driveUploadProgress .dup-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  #driveUploadProgress .dup-spinner{width:34px;height:34px;flex:0 0 34px;border:4px solid rgba(100,116,139,.22);border-top-color:#2563eb;border-radius:50%;animation:dupSpin .8s linear infinite}
+  #driveUploadProgress .dup-title{font-size:18px;font-weight:750;line-height:1.3}
+  #driveUploadProgress .dup-sub{font-size:13px;opacity:.75;margin-top:4px;overflow-wrap:anywhere}
+  #driveUploadProgress .dup-track{height:18px;background:rgba(100,116,139,.2);border-radius:999px;overflow:hidden;margin:16px 0 10px}
+  #driveUploadProgress .dup-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#06b6d4);transition:width .18s ease;position:relative}
+  #driveUploadProgress .dup-fill.busy:after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.45) 48%,transparent 75%);background-size:200% 100%;animation:dupShimmer 1.1s linear infinite}
+  #driveUploadProgress .dup-meta{display:flex;justify-content:space-between;gap:12px;font-size:13px;opacity:.8}
+  #driveUploadProgress .dup-stage{font-size:13px;line-height:1.5;margin-top:14px;min-height:20px}
+  #driveUploadProgress .dup-note{font-size:12px;opacity:.68;margin-top:8px;line-height:1.45}
+  @keyframes dupSpin{to{transform:rotate(360deg)}}@keyframes dupShimmer{to{background-position:-200% 0}}
+  @media(prefers-reduced-motion:reduce){#driveUploadProgress *{animation:none!important;transition:none!important}}
+  `;
+  document.head.appendChild(style);
+  const overlay=document.createElement('div');overlay.id='driveUploadProgress';
+  overlay.innerHTML=`<div class="dup-card" role="status" aria-live="polite"><div class="dup-head"><div class="dup-spinner" id="dupSpinner"></div><div><div class="dup-title" id="dupTitle">Mengunggah ke database</div><div class="dup-sub" id="dupName"></div></div></div><div class="dup-track"><div class="dup-fill busy" id="dupFill"></div></div><div class="dup-meta"><span id="dupPercent">0%</span><span id="dupBytes">Menyiapkan file…</span></div><div class="dup-stage" id="dupStage">Menyiapkan unggahan aman…</div><div class="dup-note">Berkas dan referensinya sedang diproses. Jangan tutup halaman sampai unggahan dan konfirmasi database selesai.</div></div>`;
+  document.body.appendChild(overlay);
+}
+function driveProgressShow(file){
+  ensureDriveProgressUI();const el=id=>document.getElementById(id);
+  document.getElementById('driveUploadProgress').style.display='flex';
+  el('dupTitle').textContent='Mengunggah ke database';el('dupName').textContent=file.name;
+  el('dupPercent').textContent='0%';el('dupBytes').textContent='0 B / '+fsz(file.size);
+  el('dupStage').textContent='Menyiapkan unggahan…';el('dupFill').style.width='0%';el('dupFill').classList.add('busy');
+  el('dupSpinner').style.display='block';
+}
+function driveProgressUpdate(file,loaded,stage,final=false){
+  ensureDriveProgressUI();const el=id=>document.getElementById(id);const n=Math.max(0,Math.min(file.size,loaded||0));const pct=file.size?Math.floor(n/file.size*100):100;
+  el('dupPercent').textContent=pct+'%';el('dupBytes').textContent=fsz(n)+' / '+fsz(file.size);el('dupStage').textContent=stage;
+  el('dupFill').style.width=pct+'%';if(final){el('dupFill').classList.remove('busy');el('dupSpinner').style.display='none';el('dupTitle').textContent='Menyimpan ke database…'}else{el('dupFill').classList.add('busy');el('dupSpinner').style.display='block'}
+  badge('Mengunggah ke database… '+pct+'%');
+}
+function driveProgressHide(){const el=document.getElementById('driveUploadProgress');if(el)el.style.display='none'}
+function driveProxyChunk(file,chunk,headers,start,retry=true){
+  return new Promise((resolve,reject)=>{
+    const xhr=new XMLHttpRequest();xhr.open('POST',SB.url+'/functions/v1/drive-upload-proxy',true);
+    xhr.setRequestHeader('apikey',SB.key);xhr.setRequestHeader('Authorization','Bearer '+TK);
+    Object.entries(headers).forEach(([k,v])=>xhr.setRequestHeader(k,v));
+    xhr.upload.onprogress=e=>{if(e.lengthComputable)driveProgressUpdate(file,start+Math.min(e.loaded,chunk.size),'Mengirim potongan file ke server aman…')};
+    xhr.onerror=()=>reject(new Error('Koneksi ke Supabase terputus saat mengirim potongan file.'));
+    xhr.ontimeout=()=>reject(new Error('Waktu pengiriman potongan file habis.'));
+    xhr.timeout=0;
+    xhr.onload=async()=>{
+      let data={};try{data=JSON.parse(xhr.responseText||'{}')}catch(_){data={error:xhr.responseText||'Respons tidak valid'}}
+      if(xhr.status===401&&retry&&RT){try{await refresh();return resolve(await driveProxyChunk(file,chunk,headers,start,false))}catch(e){return reject(e)}}
+      if(xhr.status<200||xhr.status>=300)return reject(new Error(data.error||data.message||('HTTP '+xhr.status)));
+      resolve(data);
+    };
+    xhr.send(chunk);
+  });
+}
+async function driveUploadFileImpl(file){
+  if(!SB.url||!TK)throw new Error('Koneksi Supabase atau sesi login tidak tersedia.');
+  driveProgressShow(file);
+  const mime=file.type||'application/octet-stream';
+  let init;
+  try{
+    init=await driveFetch('drive-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fileName:file.name,mimeType:mime,fileSize:file.size})});
+  }catch(e){
+    throw new Error('Tahap 1 — Supabase drive-upload gagal: '+e.message+'. Periksa status Edge Function, token login, dan CORS.');
+  }
+  if(!init.success||!init.uploadUrl||!init.sessionId)throw new Error('Tahap 1 — Supabase tidak memberikan alamat unggah: '+(init.error||'respons tidak lengkap.'));
+
+  // Tahap 2: kirim file dalam potongan melalui Edge Function agar browser
+  // tidak perlu mengakses endpoint Google Drive secara langsung (menghindari CORS).
+  const CHUNK_SIZE=5*1024*1024;
+  let fileId=null;
+  for(let start=0;start<file.size;start+=CHUNK_SIZE){
+    const end=Math.min(start+CHUNK_SIZE,file.size)-1;
+    const chunk=file.slice(start,end+1);
+    let part;
+    const chunkHeaders={
+      'Content-Type':mime,
+      'x-upload-url':init.uploadUrl,
+      'x-session-id':init.sessionId,
+      'x-file-name':encodeURIComponent(file.name),
+      'x-file-type':encodeURIComponent(mime),
+      'Content-Range':'bytes '+start+'-'+end+'/'+file.size
+    };
+    driveProgressUpdate(file,start,'Mengirim potongan '+(Math.floor(start/CHUNK_SIZE)+1)+'…');
+    try{
+      part=await driveProxyChunk(file,chunk,chunkHeaders,start);
+    }catch(e){
+      throw new Error('Tahap 2 — Proxy Supabase gagal pada byte '+start+'–'+end+': '+e.message+'. Periksa log Edge Function drive-upload-proxy.');
+    }
+    if(!part.success)throw new Error('Tahap 2 — Server menolak potongan berkas: '+(part.error||'respons tidak valid.'));
+    if(part.complete&&part.fileId)fileId=part.fileId;
+    driveProgressUpdate(file,end+1,'Potongan '+(Math.floor(start/CHUNK_SIZE)+1)+' selesai. Melanjutkan unggahan…');
+  }
+  if(!fileId)throw new Error('Tahap 2 — Server tidak mengembalikan ID berkas setelah semua potongan dikirim.');
+
+  driveProgressUpdate(file,file.size,'Berkas terkirim. Memverifikasi dan menyimpan data…',true);
+  let done;
+  try{
+    done=await driveFetch('drive-upload-complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:init.sessionId,fileId})});
+  }catch(e){
+    throw new Error('Tahap 3 — Konfirmasi Supabase gagal: '+e.message+'. Berkas mungkin sudah terkirim; periksa daftar berkas sebelum mencoba ulang.');
+  }
+  if(!done.success||!done.fileId)throw new Error('Tahap 3 — Konfirmasi penyimpanan gagal: '+(done.error||'respons tidak lengkap.'));
+  driveProgressUpdate(file,file.size,'Unggahan dan konfirmasi database berhasil.',true);
+  return DRIVE_MARK+JSON.stringify({fileId:done.fileId,fileName:done.fileName||file.name,mimeType:done.mimeType||mime,fileSize:done.fileSize??file.size,webViewLink:done.webViewLink||null});
+}
+async function driveUploadFile(file){try{return await driveUploadFileImpl(file)}finally{setTimeout(driveProgressHide,900)}}
+function rd(f,ok,lim0,fail){badge('Mengunggah '+f.name+' ke database…');driveUploadFile(f).then(marker=>{badge('✓ Berkas tersimpan; referensi tercatat di database');ok(marker,f.name)}).catch(e=>{driveProgressHide();badge('⚠ Unggah ke database gagal',1);alert('Gagal mengunggah "'+f.name+'" ke database: '+e.message);fail&&fail(e)})}
 /* ===== Filter guru (khusus kepala sekolah, hanya lihat) ===== */
 let KG='';
 const kgok=x=>me.role!='kepsek'||!KG||x.guru==KG;
@@ -867,17 +976,17 @@ md(`<h3>${eid?'Ubah pengumpulan tugas':'Kumpulkan tugas'}</h3><label>Jawaban (te
 <input id="kfi" type="file" multiple hidden onchange="kfAdd([...this.files]);this.value=''">
 <div class="row np" style="margin:0 0 6px"><button class="b g" type="button" onclick="$('#kfi').click()">＋ Tambah berkas</button><span class="mu" style="font-size:12px;align-self:center">atau tarik berkas ke sini</span></div>
 <div id="kfl"></div></div>
-<p class="mu" style="font-size:12px;margin:6px 0 0">Boleh lebih dari satu berkas, tekan "＋ Tambah berkas" lagi untuk menambah. Jenis: gambar, PDF, Word, Excel, PowerPoint, video, audio, dll. Maks ${KMAX} berkas, ${KLIM()/1e6} MB per berkas, total ${KTOT()/1e6} MB.</p></div>
+<p class="mu" style="font-size:12px;margin:6px 0 0">Boleh lebih dari satu berkas, tekan "＋ Tambah berkas" lagi untuk menambah. Jenis: gambar, PDF, Word, Excel, PowerPoint, video, audio, dll. Maks ${KMAX} berkas. Berkas dan referensinya diproses melalui database.</p></div>
 <div class="row"><button class="b" id="kfok" onclick="kfSave('${tid||''}','${eid||''}')">Simpan</button><button class="b g" onclick="cm()">Batal</button></div>`);kfDraw()}
 async function kfSave(tid,eid){const teks=$('#kft').value,kept=KFX.filter(x=>x.keep),btn=$('#kfok'),ok0=()=>{btn.disabled=false;btn.textContent='Simpan';badge('')};
 if(!teks.trim()&&!kept.length&&!KF.length)return alert('Isi jawaban teks atau lampirkan minimal satu berkas.');
 if(kept.length+KF.length>KMAX)return alert('Maksimal '+KMAX+' berkas per pengumpulan.');
-if(KF.reduce((a,f)=>a+f.size,0)>KTOT())return alert('Total ukuran berkas baru terlalu besar. Maksimal '+(KTOT()/1e6)+' MB per pengumpulan.');
-btn.disabled=true;btn.textContent='Membaca berkas…';badge('Membaca berkas…');
+
+btn.disabled=true;btn.textContent='Membaca berkas…';badge('Menyiapkan berkas…');
 try{const names=[],datas=[];
 if(eid){const k0=db.kumpul.find(x=>x.id==eid),ds=await gdataAll('kumpul',eid),NN=fnames(k0);KFX.forEach((x,i)=>{if(x.keep&&ds[i]){names.push(NN[i]);datas.push(ds[i])}})}
 for(const f of KF){const r=await new Promise(res=>rd(f,(d,n)=>res([d,n]),KLIM(),()=>res(null)));if(!r)return ok0();names.push(r[1]);datas.push(r[0])}
-if(datas.reduce((a,d)=>a+d.length*.75,0)>KTOT()){alert('Total ukuran semua berkas melebihi '+(KTOT()/1e6)+' MB. Kurangi berkas.');return ok0()}
+
 let k;if(eid){k=db.kumpul.find(x=>x.id==eid);k.teks=teks;k.tgl=today();delete k.izin}else k={id:uid(),tugas:tid,siswa:me.id,teks,tgl:today(),nilai:null};
 kpack(k,names,datas);if(!eid)db.kumpul.push(k);save();cm();draw();if(!SB.url)badge('')}
 catch(e){alert('Gagal menyimpan: '+e.message);ok0()}}
@@ -1110,7 +1219,7 @@ db.nilai.push(plRow('pl_pilih',me.id,'-'),plRow('pl_suara','-',id));save();draw(
 function plSet(){const c=plCfg();c.judul=($('#pl_j').value.trim()||c.judul);c.status=$('#pl_s').value;c.umum=$('#pl_u').checked;
 const r=db.nilai.find(x=>x.jenis=='pl_cfg'&&x.tahun==TH),ket=JSON.stringify(c);
 if(r)r.ket=ket;else{const n=plRow('pl_cfg','-',ket);n.guru=me.role=='guru'?me.id:null;db.nilai.push(n)}save();draw();alert('Setelan disimpan.')}
-function plFoto(f,ok){if(!f)return ok(null);const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);const S=300,m=Math.min(im.naturalWidth,im.naturalHeight),sx=(im.naturalWidth-m)/2,sy=(im.naturalHeight-m)*.25,c=document.createElement('canvas'),x=c.getContext('2d');c.width=c.height=S;x.fillStyle='#fff';x.fillRect(0,0,S,S);x.drawImage(im,sx,sy,m,m,0,0,S,S);ok(c.toDataURL('image/jpeg',.8))};im.onerror=()=>{URL.revokeObjectURL(u);alert('Foto tidak bisa dibaca. Gunakan berkas JPG atau PNG.');ok(null)};im.src=u}
+async function plFoto(f,ok){if(!f)return ok(null);if(!/^image\//.test(f.type)){alert('Pilih berkas gambar.');return ok(null)}try{badge('Mengunggah foto calon ke database…');const marker=await driveUploadFile(f),meta=driveMeta(marker);if(!meta)throw new Error('Metadata berkas tidak valid.');badge('✓ Foto calon tersimpan; referensinya tercatat di database');ok(driveImageUrl(meta.fileId))}catch(e){badge('⚠ Unggah foto calon gagal',1);alert('Gagal mengunggah foto calon ke database: '+e.message);ok(null)}}
 function plCalForm(id){const c=id?plCal().find(x=>x.id==id):null;
 form(id?'Ubah calon':'Tambah calon',[['no','Nomor urut','number'],['ketua','Calon Ketua OSIS','text'],['wakil','Calon Wakil Ketua OSIS','text'],['fk','Foto Calon Ketua'+(c&&c.fk?' (kosongkan bila tidak diganti)':''),'file'],['fw','Foto Calon Wakil Ketua'+(c&&c.fw?' (kosongkan bila tidak diganti)':''),'file'],['visi','Visi','textarea'],['misi','Misi','textarea']],v=>{
 const no=parseInt(v.no)||0,ketua=v.ketua.trim(),wakil=v.wakil.trim();
@@ -1152,7 +1261,7 @@ function svList(g,m,edit){return SVD.map(([k,t,d])=>{const ok=svDone(g,m,k),F=sv
 if(SVA[k]){const n=svAuto(g,m,k);b=`<p style="margin:6px 0">📊 ${n?`<b>${n}</b> ${k=='absen'?'pertemuan':'jurnal'} tercatat`:'Belum ada data tercatat'}</p>${edit?`<button class="b g s np" onclick="go('${k}')">Buka menu ${t}</button>`:''}`}
 else{b=F.map(r=>`<div style="margin:6px 0;padding:6px 8px;border:1px solid var(--bd);border-radius:10px"><div class="mu" style="font-size:12px">${esc(r.judul||'')}${r.judul?' · ':''}diunggah ${esc(r.tgl||'-')}</div>${fchip('supervisi',r)}${edit?`<button class="b d s np" onclick="svDel('${r.id}')">Hapus</button>`:''}</div>`).join('')||`<p class="mu" style="margin:6px 0">Belum ada berkas diunggah.</p>`;if(edit)b+=`<button class="b s np" onclick="svUp('${k}')">⬆ Unggah ${F.length?'berkas lain':'berkas'}</button>`}
 return`<div class="card" style="margin:10px 0;border-left:5px solid ${ok?'#10b981':'#cbd5e1'}"><div class="row" style="justify-content:space-between;align-items:flex-start;gap:8px"><div><b>${ok?'✅':'⬜'} ${t}</b><div class="mu" style="font-size:12px">${d}</div></div><span class="tag" style="white-space:nowrap">${ok?'Lengkap':'Belum'}</span></div>${b}</div>`}).join('')}
-function dgHTML(){const g=me.id,m=MP||'',P=svProg(g,m);return`<div class="card"><h3 style="margin-top:0">Kelengkapan Dokumen · ${esc(svMn(m))}</h3>${svBar(P.n,P.t)}<p class="mu" style="font-size:13px">Dokumen yang Anda unggah di sini dapat dilihat Kepala Sekolah untuk supervisi. Absensi dan jurnal terbaca otomatis dari menu masing-masing. Ukuran berkas maksimal ${LIM()/1e6} MB. Untuk dua mata pelajaran, ganti mapel di kanan atas; dokumen tiap mapel terpisah.</p></div>${svList(g,m,true)}`}
+function dgHTML(){const g=me.id,m=MP||'',P=svProg(g,m);return`<div class="card"><h3 style="margin-top:0">Kelengkapan Dokumen · ${esc(svMn(m))}</h3>${svBar(P.n,P.t)}<p class="mu" style="font-size:13px">Dokumen yang Anda unggah di sini dapat dilihat Kepala Sekolah untuk supervisi. Absensi dan jurnal terbaca otomatis dari menu masing-masing. Berkas berhasil diproses; referensinya tercatat di database. Untuk dua mata pelajaran, ganti mapel di kanan atas; dokumen tiap mapel terpisah.</p></div>${svList(g,m,true)}`}
 function svUp(k){const d=SVD.find(x=>x[0]==k);form('Unggah: '+d[1],[['judul','Keterangan (opsional, mis. Semester Ganjil)','textarea'],['f','Pilih berkas (PDF, Word, Excel, PowerPoint, atau gambar)','file']],v=>{if(!v.f){alert('Pilih berkas terlebih dahulu.');return false}
 rd(v.f,(data,name)=>{db.supervisi.push({id:uid(),guru:me.id,mapel:MP||null,tahun:TH,jenis:k,judul:(v.judul||'').trim().slice(0,200),file:name,data,tgl:today(),cat:null});save();draw()})})}
 function svDel(id){const r=db.supervisi.find(x=>x.id==id);if(!r||!confirm('Hapus berkas "'+r.file+'"?'))return;db.supervisi=db.supervisi.filter(x=>x.id!=id);save();draw()}
@@ -1163,7 +1272,7 @@ const rows=db.guru.map(g=>({g,P:svProgG(g.id)})),sum=rows.reduce((a,r)=>a+r.P.n,
 return`<div class="card"><div class="row" style="gap:18px;flex-wrap:wrap"><div><span class="mu">Jumlah guru</span><br><b style="font-size:24px">${rows.length}</b></div><div><span class="mu">Rata-rata kelengkapan</span><br><b style="font-size:24px">${tot?Math.round(sum*100/tot):0}%</b></div><div><span class="mu">Dokumen lengkap 100%</span><br><b style="font-size:24px">${full}</b></div></div><p class="mu" style="font-size:13px;margin-bottom:0">Klik nama guru untuk melihat kelengkapan tiap dokumen. Tahun ajaran ${esc(nm('tahun',TH))}.</p></div><div class="card">${tbl(['Nama Guru','Mata Pelajaran','Progres Kelengkapan',''],rows.map(({g,P})=>[`<a href="#" style="color:var(--pr);font-weight:700" onclick="SVS.g='${g.id}';SVS.m='';draw();return false">${esc(g.nama)}</a>`,esc(svMap(g.id).filter(Boolean).map(m=>nm('mapel',m)).join(', ')||'-'),svBar(P.n,P.t),`<button class="b s np" onclick="SVS.g='${g.id}';SVS.m='';draw()">Lihat</button>`]))}</div>`}
 const DPK=['SK / Surat Tugas','Program Kerja Sekolah','Instrumen Supervisi','Hasil Supervisi','Lainnya'];
 function dpHTML(){const L=(db.supervisi||[]).filter(x=>x.jenis=='pendukung').sort((a,b)=>(b.tgl||'')>(a.tgl||'')?1:-1);
-return`<div class="card"><div class="row np"><button class="b" onclick="dpUp()">+ Unggah Dokumen</button></div>${tbl(['Judul','Kategori','Berkas','Tanggal',''],L.map(r=>[esc(r.judul||'-'),esc(r.cat||'-'),fchip('supervisi',r),esc(r.tgl||'-'),`<button class="b d s np" onclick="svDel('${r.id}')">Hapus</button>`]))}<p class="mu" style="font-size:12px">Ukuran berkas maksimal ${LIM()/1e6} MB.</p></div>`}
+return`<div class="card"><div class="row np"><button class="b" onclick="dpUp()">+ Unggah Dokumen</button></div>${tbl(['Judul','Kategori','Berkas','Tanggal',''],L.map(r=>[esc(r.judul||'-'),esc(r.cat||'-'),fchip('supervisi',r),esc(r.tgl||'-'),`<button class="b d s np" onclick="svDel('${r.id}')">Hapus</button>`]))}<p class="mu" style="font-size:12px">Berkas berhasil diproses; referensinya tercatat di database.</p></div>`}
 function dpUp(){form('Unggah Dokumen Pendukung',[['cat','Kategori','select',DPK.map(x=>[x,x])],['judul','Judul dokumen','text'],['f','Pilih berkas','file']],v=>{if(!v.f){alert('Pilih berkas terlebih dahulu.');return false}
 rd(v.f,(data,name)=>{db.supervisi.push({id:uid(),guru:null,mapel:null,tahun:TH,jenis:'pendukung',judul:v.judul.trim().slice(0,200),file:name,data,tgl:today(),cat:v.cat});save();draw()})})}
 
@@ -1171,9 +1280,9 @@ rd(v.f,(data,name)=>{db.supervisi.push({id:uid(),guru:null,mapel:null,tahun:TH,j
 const DSK=['Profil & Legalitas','Kurikulum & Akademik','Keuangan & Aset','Kesiswaan','Kepegawaian','Sarana & Prasarana','Surat Menyurat','Lainnya'];let DSS={q:'',k:''};
 function dsHTML(){const q=DSS.q.toLowerCase(),L=(db.supervisi||[]).filter(x=>x.jenis=='sekolah'&&(!DSS.k||x.cat==DSS.k)&&(!q||((x.judul||'')+' '+(x.file||'')).toLowerCase().includes(q))).sort((a,b)=>(b.tgl||'')>(a.tgl||'')?1:-1);
 return`<div class="card"><div class="row np"><button class="b" onclick="dsUp()">+ Unggah Dokumen (boleh banyak)</button><label>Kategori<select onchange="DSS.k=this.value;draw()">${opt([['','Semua kategori'],...[...new Set([...DSK,...(db.supervisi||[]).filter(x=>x.jenis=='sekolah'&&x.cat).map(x=>x.cat)])].map(x=>[x,x])],DSS.k)}</select></label><label>Cari<input value="${esc(DSS.q)}" placeholder="judul atau nama berkas" onchange="DSS.q=this.value;draw()"></label></div>${tbl(['Judul','Kategori','Berkas','Tanggal',''],L.map(r=>[esc(r.judul||'-'),esc(r.cat||'-'),fchip('supervisi',r),esc(r.tgl||'-'),`<button class="b d s np" onclick="svDel('${r.id}')">Hapus</button>`]))}<p class="mu" style="font-size:12px">${L.length} dokumen. Ukuran maksimal ${LIM()/1e6} MB per berkas.</p></div>`}
-function dsUp(){md(`<h3>Unggah Dokumen Sekolah</h3><label>Nama dokumen <span class="mu">(ketik sendiri; kosongkan untuk memakai nama berkas)</span><input id="ds_j" placeholder="mis. SK Pendirian Sekolah"></label><label>Kategori<select id="ds_k" onchange="$('#ds_kb').style.display=this.value=='__baru'?'block':'none'">${opt(DSK.map(x=>[x,x]))}<option value="__baru">✏️ Tulis kategori sendiri…</option></select></label><input id="ds_kb" placeholder="Tulis nama kategori" style="display:none"><label>Pilih berkas (boleh banyak sekaligus)<input id="ds_f" type="file" multiple></label><p class="mu" style="font-size:12px">Bila mengunggah beberapa berkas sekaligus, nama dokumen diberi nomor urut. Berkas lebih dari ${LIM()/1e6} MB dilewati.</p><div class="row"><button class="b" id="ds_ok">Unggah</button><button class="b g" onclick="cm()">Batal</button></div>`);
+function dsUp(){md(`<h3>Unggah Dokumen Sekolah</h3><label>Nama dokumen <span class="mu">(ketik sendiri; kosongkan untuk memakai nama berkas)</span><input id="ds_j" placeholder="mis. SK Pendirian Sekolah"></label><label>Kategori<select id="ds_k" onchange="$('#ds_kb').style.display=this.value=='__baru'?'block':'none'">${opt(DSK.map(x=>[x,x]))}<option value="__baru">✏️ Tulis kategori sendiri…</option></select></label><input id="ds_kb" placeholder="Tulis nama kategori" style="display:none"><label>Pilih berkas (boleh banyak sekaligus)<input id="ds_f" type="file" multiple></label><p class="mu" style="font-size:12px">Bila mengunggah beberapa berkas sekaligus, nama dokumen diberi nomor urut. Semua jenis dan ukuran berkas diunggah; data dan referensinya dicatat di database.</p><div class="row"><button class="b" id="ds_ok">Unggah</button><button class="b g" onclick="cm()">Batal</button></div>`);
 $('#ds_ok').onclick=async()=>{const fs=[...$('#ds_f').files];if(!fs.length)return alert('Pilih minimal satu berkas.');let k=$('#ds_k').value;if(k=='__baru'){k=$('#ds_kb').value.trim().slice(0,60);if(!k)return alert('Tulis nama kategori.')}const jd=$('#ds_j').value.trim().slice(0,200);let ok=0,skip=0,n=0;$('#ds_ok').disabled=true;$('#ds_ok').textContent='Mengunggah…';
-for(const f of fs){if(f.size>LIM()&&!/^image\//.test(f.type)){skip++;continue}
+for(const f of fs){
 await Promise.race([new Promise(res=>rd(f,(data,name)=>{db.supervisi.push({id:uid(),guru:null,mapel:null,tahun:TH,jenis:'sekolah',judul:jd?(fs.length>1?jd+' ('+(++n)+')':jd):name.replace(/\.[^.]+$/,'').slice(0,200),file:name,data,tgl:today(),cat:k});ok++;res()})),new Promise(r=>setTimeout(r,15000))])}
 skip+=fs.length-ok-skip;save();cm();draw();alert(ok+' dokumen berhasil diunggah.'+(skip?'\n'+skip+' berkas dilewati (terlalu besar atau gagal dibaca).':''))}}
 /* ===== Perpustakaan ===== */
@@ -1216,14 +1325,13 @@ const pfKey=()=>me.uid||me.id||('u-'+me.role),pfRow=()=>{_pkE();return db.pf_use
 pfBase=()=>{if(me.nm0==null)me.nm0=me.nama;return me.nm0},
 pfApply=()=>{if(!me)return;_pkE();const b=pfBase(),r=pfRow();me.nama=(r&&r.nama||b)+(r&&r.gelar?', '+r.gelar:'')},
 pfNip=()=>{const r=pfRow();if(r&&r.nip!=null&&r.nip!=='')return r.nip;return me.role=='guru'?((db.guru.find(x=>x.id==me.id)||{}).nip||''):me.role=='siswa'?((db.siswa.find(x=>x.id==me.id)||{}).nis||''):me.role=='kepsek'?(PF().nip_kepsek||''):''},
-pfFt=r=>/^data:image\/(jpeg|png|webp);base64,/.test((r&&r.foto)||'')?r.foto:'',
+pfFt=r=>/^data:image\/(jpeg|png|webp);base64,/.test((r&&r.foto)||'')||/^https:\/\//.test((r&&r.foto)||'')?r.foto:'',
 pfAv=z=>{if(!me)return'';const f=pfFt(pfRow()),st=`width:${z}px;height:${z}px;border-radius:50%;margin-right:8px;flex:none;`;return f?`<img src="${f}" alt="" style="${st}object-fit:cover">`:`<span style="${st}background:#3b82f6;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:${Math.round(z/2.4)}px">${esc((pfBase()||'?').trim().charAt(0).toUpperCase())}</span>`};
 function pfEnsure(){let r=pfRow();if(!r)db.pf_user.push(r={id:pfKey(),role:me.role,nama:'',nip:'',gelar:'',foto:'',tgl:today()});return r}
 function pfHTML(){const r=pfRow()||{},f=pfFt(r);return`<div class="card" style="max-width:560px"><h3>Profil Saya</h3><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:8px 0">${pfAv(84).replace('margin-right:8px;','')}<div><label style="margin:0">Foto profil<input type="file" accept="image/*" onchange="pfFoto(this)"></label>${f?'<button class="b d s np" style="margin-top:6px" onclick="pfFotoDel()">Hapus foto</button>':''}<p class="mu" style="font-size:12px;margin:4px 0 0">Foto otomatis dipotong persegi dan diperkecil.</p></div></div><label>Nama<input id="pf_n" value="${esc(r.nama||pfBase())}"></label><label>Gelar <span class="mu">(contoh: S.Pd., M.Pd.)</span><input id="pf_g" value="${esc(r.gelar||'')}"></label><label>${me.role=='siswa'?'NIS':'NIP'}<input id="pf_i" value="${esc(pfNip())}"></label><div class="row"><button class="b" onclick="pfSave()">Simpan Profil</button></div><p class="mu" style="font-size:12px">Perubahan ini hanya mengubah tampilan profil Anda. Email, sandi, dan Data Master tidak ikut berubah.</p></div>`}
 function pfSave(){const n=$('#pf_n').value.trim();if(!n)return alert('Nama wajib diisi.');const r=pfEnsure();Object.assign(r,{nama:n.slice(0,120),gelar:$('#pf_g').value.trim().slice(0,60),nip:$('#pf_i').value.trim().slice(0,40),tgl:today()});pfApply();save();draw();alert('Profil disimpan.')}
 function pfFotoDel(){const r=pfRow();if(!r)return;r.foto='';save();draw()}
-function pfFoto(inp){const f=inp.files[0];if(!f)return;if(!/^image\//.test(f.type))return alert('Pilih berkas gambar.');const u=URL.createObjectURL(f),im=new Image();im.onerror=()=>alert('Gambar tidak dapat dibaca.');
-im.onload=()=>{URL.revokeObjectURL(u);const q=Math.min(im.naturalWidth,im.naturalHeight),z=Math.min(256,q),c=document.createElement('canvas');c.width=c.height=z;c.getContext('2d').drawImage(im,(im.naturalWidth-q)/2,(im.naturalHeight-q)/2,q,q,0,0,z,z);const r=pfEnsure();r.foto=c.toDataURL('image/jpeg',.85);r.tgl=today();save();draw()};im.src=u}
+async function pfFoto(inp){const f=inp.files[0];inp.value='';if(!f)return;if(!/^image\//.test(f.type))return alert('Pilih berkas gambar.');try{badge('Mengunggah foto profil ke database…');const marker=await driveUploadFile(f),meta=driveMeta(marker);if(!meta)throw new Error('Metadata berkas tidak valid.');const r=pfEnsure();r.foto=driveImageUrl(meta.fileId);r.tgl=today();save();draw();badge('✓ Foto profil tersimpan; referensinya tercatat di database')}catch(e){badge('⚠ Unggah foto gagal',1);alert('Gagal mengunggah foto profil ke database: '+e.message)}}
 
 /* ===== Perpustakaan: sirkulasi lanjutan, anggota, dokumen ===== */
 function pkPerpanjang(id){const p=db.pk_pinjam.find(x=>x.id==id);if(!p)return;const h=Math.floor(+prompt('Perpanjang berapa hari?',PKLAMA));if(!h||h<1)return;p.tgl_tempo=addD(p.tgl_tempo>today()?p.tgl_tempo:today(),h);save();draw()}
@@ -1238,11 +1346,11 @@ function pkDok(){const q=(PKS.dq||'').toLowerCase(),L=(db.supervisi||[]).filter(
 return`<div class="card"><div class="row np">${pkAdm()?'<button class="b" onclick="pkDokUp()">+ Unggah Dokumen (boleh banyak)</button>':''}<label>Kategori<select onchange="PKS.dk=this.value;draw()">${opt([['','Semua kategori'],...PKD.map(x=>[x,x])],PKS.dk||'')}</select></label><label>Cari<input value="${esc(PKS.dq||'')}" placeholder="judul atau nama berkas" onchange="PKS.dq=this.value;draw()"></label></div>${tbl(['Judul','Kategori','Berkas','Tanggal',...(pkAdm()?['']:[])],L.map(r=>[esc(r.judul||'-'),esc(r.cat||'-'),fchip('supervisi',r),esc(r.tgl||'-'),...(pkAdm()?[`<button class="b d s np" onclick="svDel('${r.id}')">Hapus</button>`]:[])]))}<p class="mu" style="font-size:12px">${L.length} dokumen. Ukuran maksimal ${LIM()/1e6} MB per berkas.</p></div>`}
 function pkDokUp(){md(`<h3>Unggah Dokumen Perpustakaan</h3><label>Kategori<select id="pd_k">${opt(PKD.map(x=>[x,x]))}</select></label><label>Judul <span class="mu">(opsional, bila hanya satu berkas)</span><input id="pd_j"></label><label>Pilih berkas (boleh banyak sekaligus)<input id="pd_f" type="file" multiple></label><div class="row"><button class="b" id="pd_ok">Unggah</button><button class="b g" onclick="cm()">Batal</button></div>`);
 $('#pd_ok').onclick=async()=>{const fs=[...$('#pd_f').files];if(!fs.length)return alert('Pilih minimal satu berkas.');const k=$('#pd_k').value,j=$('#pd_j').value.trim();let ok=0,skip=0;$('#pd_ok').disabled=true;$('#pd_ok').textContent='Mengunggah…';
-for(const f of fs){if(f.size>LIM()&&!/^image\//.test(f.type)){skip++;continue}
+for(const f of fs){
 await Promise.race([new Promise(res=>rd(f,(data,name)=>{db.supervisi.push({id:uid(),guru:me.role=='guru'?me.id:null,mapel:null,tahun:TH,jenis:'pustaka',judul:(fs.length==1&&j?j:name.replace(/\.[^.]+$/,'')).slice(0,200),file:name,data,tgl:today(),cat:k});ok++;res()})),new Promise(r=>setTimeout(r,15000))])}
 skip+=fs.length-ok-skip;save();cm();draw();alert(ok+' dokumen berhasil diunggah.'+(skip?'\n'+skip+' berkas dilewati (terlalu besar atau gagal dibaca).':''))}}
 /* ===== PEMILOS publik: pemilih cukup mengetik nama (tanpa akun) ===== */
-const plSrc=x=>/^data:image\/(jpeg|png|webp);base64,/.test(x||'')?x:'';
+const plSrc=x=>/^data:image\/(jpeg|png|webp);base64,/.test(x||'')||/^https:\/\//.test(x||'')?x:'';
 const plFt=(x,n)=>plSrc(x)?`<img src="${x}" alt="${esc(n)}">`:`<div class="ph">👤</div>`;
 const plMini=c=>[c.fk,c.fw].some(plSrc)?`<span style="display:flex;gap:4px">${[c.fk,c.fw].map(x=>plSrc(x)?`<img src="${x}" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover">`:'').join('')}</span>`:'-';
 const plCard=(c,act)=>`<div class="plc"><div class="pln">${c.no}</div><div class="plf"><div>${plFt(c.fk,c.ketua)}<h3>${esc(c.ketua)}</h3><small>Calon Ketua OSIS</small></div><div>${plFt(c.fw,c.wakil)}<h3>${esc(c.wakil)}</h3><small>Calon Wakil Ketua OSIS</small></div></div>${c.visi?`<p><b>Visi</b><br>${esc(c.visi).replace(/\n/g,'<br>')}</p>`:''}${c.misi?`<p><b>Misi</b><br>${esc(c.misi).replace(/\n/g,'<br>')}</p>`:''}<button class="b" style="width:100%" onclick="${act}">Pilih Pasangan No. ${c.no}</button></div>`;
@@ -1538,10 +1646,10 @@ const ppAll=()=>(db.supervisi||[]).filter(x=>x.jenis=='perangkat'&&x.guru==me.id
 function ppPage(){if(!me||me.role!='guru')return'<div class="card">Menu ini khusus guru.</div>';
 const A=ppAll(),mp=svMap(me.id),q=PPS.q.toLowerCase(),cats=[...new Set([...PPK,...A.filter(x=>x.cat).map(x=>x.cat)])],
 L=A.filter(x=>(!PPS.k||x.cat==PPS.k)&&(!PPS.m||(x.mapel||'')==PPS.m)&&(!q||((x.judul||'')+' '+(x.file||'')).toLowerCase().includes(q))).sort((a,b)=>(b.tgl||'')>(a.tgl||'')?1:-1);
-return`<div class="card"><h3 style="margin-top:0">Perangkat Pembelajaran · ${esc(nm('tahun',TH))}</h3><p class="mu" style="font-size:13px">Simpan modul ajar, ATP, program tahunan dan semester, KKTP, LKPD, bahan ajar, rubrik, dan perangkat lain di satu tempat. Satu unggahan boleh berisi banyak berkas. Ukuran berkas maksimal ${LIM()/1e6} MB.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">${cats.map(c=>`<span class="tag">${esc(c)}: <b>${A.filter(x=>x.cat==c).length}</b></span>`).join('')}</div></div><div class="card"><div class="row np"><button class="b" onclick="ppUp()">+ Unggah Perangkat (boleh banyak)</button><label>Kategori<select onchange="PPS.k=this.value;draw()">${opt([['','Semua kategori'],...cats.map(x=>[x,x])],PPS.k)}</select></label>${mp.length>1?`<label>Mata pelajaran<select onchange="PPS.m=this.value;draw()">${opt([['','Semua mapel'],...mp.map(m=>[m,svMn(m)])],PPS.m)}</select></label>`:''}<label>Cari<input value="${esc(PPS.q)}" placeholder="judul atau nama berkas" onchange="PPS.q=this.value;draw()"></label></div>${tbl(['Judul','Kategori','Mapel','Berkas','Tanggal',''],L.map(r=>[esc(r.judul||'-'),esc(r.cat||'-'),esc(svMn(r.mapel||'')),fchip('supervisi',r),esc(r.tgl||'-'),`<button class="b d s np" onclick="svDel('${r.id}')">Hapus</button>`]))}<p class="mu" style="font-size:12px">${L.length} berkas ditampilkan dari ${A.length} berkas tahun ajaran ini.</p></div>`}
-function ppUp(){const mp=svMap(me.id),dm=mp.includes(MP||'')?(MP||''):mp[0];md(`<h3>Unggah Perangkat Pembelajaran</h3><label>Nama dokumen <span class="mu">(kosongkan untuk memakai nama berkas)</span><input id="pp_j" placeholder="mis. Modul Ajar Bab 1 Semester Ganjil"></label><label>Kategori<select id="pp_k" onchange="$('#pp_kb').style.display=this.value=='__baru'?'block':'none'">${opt(PPK.map(x=>[x,x]))}<option value="__baru">✏️ Tulis kategori sendiri…</option></select></label><input id="pp_kb" placeholder="Tulis nama kategori" style="display:none"><label>Mata pelajaran<select id="pp_m">${opt(mp.map(m=>[m,svMn(m)]),dm)}</select></label><label>Pilih berkas (boleh banyak sekaligus)<input id="pp_f" type="file" multiple></label><p class="mu" style="font-size:12px">Bila mengunggah beberapa berkas sekaligus, nama dokumen diberi nomor urut. Berkas lebih dari ${LIM()/1e6} MB dilewati.</p><div class="row"><button class="b" id="pp_ok">Unggah</button><button class="b g" onclick="cm()">Batal</button></div>`);
+return`<div class="card"><h3 style="margin-top:0">Perangkat Pembelajaran · ${esc(nm('tahun',TH))}</h3><p class="mu" style="font-size:13px">Simpan modul ajar, ATP, program tahunan dan semester, KKTP, LKPD, bahan ajar, rubrik, dan perangkat lain di satu tempat. Satu unggahan boleh berisi banyak berkas. Berkas berhasil diproses; referensinya tercatat di database.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">${cats.map(c=>`<span class="tag">${esc(c)}: <b>${A.filter(x=>x.cat==c).length}</b></span>`).join('')}</div></div><div class="card"><div class="row np"><button class="b" onclick="ppUp()">+ Unggah Perangkat (boleh banyak)</button><label>Kategori<select onchange="PPS.k=this.value;draw()">${opt([['','Semua kategori'],...cats.map(x=>[x,x])],PPS.k)}</select></label>${mp.length>1?`<label>Mata pelajaran<select onchange="PPS.m=this.value;draw()">${opt([['','Semua mapel'],...mp.map(m=>[m,svMn(m)])],PPS.m)}</select></label>`:''}<label>Cari<input value="${esc(PPS.q)}" placeholder="judul atau nama berkas" onchange="PPS.q=this.value;draw()"></label></div>${tbl(['Judul','Kategori','Mapel','Berkas','Tanggal',''],L.map(r=>[esc(r.judul||'-'),esc(r.cat||'-'),esc(svMn(r.mapel||'')),fchip('supervisi',r),esc(r.tgl||'-'),`<button class="b d s np" onclick="svDel('${r.id}')">Hapus</button>`]))}<p class="mu" style="font-size:12px">${L.length} berkas ditampilkan dari ${A.length} berkas tahun ajaran ini.</p></div>`}
+function ppUp(){const mp=svMap(me.id),dm=mp.includes(MP||'')?(MP||''):mp[0];md(`<h3>Unggah Perangkat Pembelajaran</h3><label>Nama dokumen <span class="mu">(kosongkan untuk memakai nama berkas)</span><input id="pp_j" placeholder="mis. Modul Ajar Bab 1 Semester Ganjil"></label><label>Kategori<select id="pp_k" onchange="$('#pp_kb').style.display=this.value=='__baru'?'block':'none'">${opt(PPK.map(x=>[x,x]))}<option value="__baru">✏️ Tulis kategori sendiri…</option></select></label><input id="pp_kb" placeholder="Tulis nama kategori" style="display:none"><label>Mata pelajaran<select id="pp_m">${opt(mp.map(m=>[m,svMn(m)]),dm)}</select></label><label>Pilih berkas (boleh banyak sekaligus)<input id="pp_f" type="file" multiple></label><p class="mu" style="font-size:12px">Bila mengunggah beberapa berkas sekaligus, nama dokumen diberi nomor urut. Semua jenis dan ukuran berkas diunggah; data dan referensinya dicatat di database.</p><div class="row"><button class="b" id="pp_ok">Unggah</button><button class="b g" onclick="cm()">Batal</button></div>`);
 $('#pp_ok').onclick=async()=>{const fs=[...$('#pp_f').files];if(!fs.length)return alert('Pilih minimal satu berkas.');let k=$('#pp_k').value;if(k=='__baru'){k=$('#pp_kb').value.trim().slice(0,60);if(!k)return alert('Tulis nama kategori.')}const jd=$('#pp_j').value.trim().slice(0,200),m=$('#pp_m').value||null;let ok=0,skip=0,n=0;$('#pp_ok').disabled=true;$('#pp_ok').textContent='Mengunggah…';
-for(const f of fs){if(f.size>LIM()&&!/^image\//.test(f.type)){skip++;continue}
+for(const f of fs){
 await Promise.race([new Promise(res=>rd(f,(data,name)=>{db.supervisi.push({id:uid(),guru:me.id,mapel:m,tahun:TH,jenis:'perangkat',judul:jd?(fs.length>1?jd+' ('+(++n)+')':jd):name.replace(/\.[^.]+$/,'').slice(0,200),file:name,data,tgl:today(),cat:k});ok++;res()})),new Promise(r=>setTimeout(r,15000))])}
 skip+=fs.length-ok-skip;save();cm();draw();alert(ok+' berkas berhasil diunggah.'+(skip?'\n'+skip+' berkas dilewati (terlalu besar atau gagal dibaca).':''))}}
 ICS.perangkat=()=>`<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3" fill="#a78bfa"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`;
@@ -1641,7 +1749,7 @@ function tuArsip(){const q=TAR.q.toLowerCase(),L=(db.supervisi||[]).filter(x=>x.
 return`<div class="card"><div class="row np">${rw?'<button class="b" onclick="tuArsipUp()">+ Unggah Dokumen (boleh banyak)</button>':''}<label>Kategori<select onchange="TAR.k=this.value;draw()">${opt([['','Semua kategori'],...TUD.map(x=>[x,x])],TAR.k)}</select></label><label>Cari<input value="${esc(TAR.q)}" placeholder="judul atau nama berkas" onchange="TAR.q=this.value;draw()"></label></div>${tuBulk('arsip',L.map(r=>r.id))}${tbl([...(rw?[tuCkAll('arsip')]:[]),'Judul','Kategori','Berkas','Tanggal',...(rw?['']:[])],L.map(r=>[...(rw?[tuCk('arsip',r.id)]:[]),esc(r.judul||'-'),esc(r.cat||'-'),fchip('supervisi',r),esc(r.tgl||'-'),...(rw?[`<button class="b d s np" onclick="svDel('${r.id}')">Hapus</button>`]:[])]))}<p class="mu" style="font-size:12px">${L.length} dokumen. Ukuran maksimal ${LIM()/1e6} MB per berkas (gambar boleh lebih besar).</p></div>`}
 function tuArsipUp(){md(`<h3>Unggah Arsip Dokumen</h3><label>Kategori<select id="ta_k">${opt(TUD.map(x=>[x,x]))}</select></label><label>Judul <span class="mu">(opsional, bila hanya satu berkas)</span><input id="ta_j"></label><label>Pilih berkas (boleh banyak sekaligus)<input id="ta_f" type="file" multiple></label><div class="row"><button class="b" id="ta_ok">Unggah</button><button class="b g" onclick="cm()">Batal</button></div>`);
 $('#ta_ok').onclick=async()=>{const fs=[...$('#ta_f').files];if(!fs.length)return alert('Pilih minimal satu berkas.');const k=$('#ta_k').value,j=$('#ta_j').value.trim();let ok=0,skip=0;$('#ta_ok').disabled=true;$('#ta_ok').textContent='Mengunggah…';
-for(const f of fs){if(f.size>LIM()&&!/^image\//.test(f.type)){skip++;continue}await Promise.race([new Promise(res=>rd(f,(data,name)=>{db.supervisi.push({id:uid(),guru:me.role=='guru'?me.id:null,mapel:null,tahun:TH,jenis:'tu',judul:(fs.length==1&&j?j:name.replace(/\.[^.]+$/,'')).slice(0,200),file:name,data,tgl:today(),cat:k});ok++;res()})),new Promise(r=>setTimeout(r,15000))])}
+for(const f of fs){await Promise.race([new Promise(res=>rd(f,(data,name)=>{db.supervisi.push({id:uid(),guru:me.role=='guru'?me.id:null,mapel:null,tahun:TH,jenis:'tu',judul:(fs.length==1&&j?j:name.replace(/\.[^.]+$/,'')).slice(0,200),file:name,data,tgl:today(),cat:k});ok++;res()})),new Promise(r=>setTimeout(r,15000))])}
 skip+=fs.length-ok-skip;save();cm();draw();alert(ok+' dokumen berhasil diunggah.'+(skip?'\n'+skip+' berkas dilewati (terlalu besar atau gagal dibaca).':''))}}
 
 /* ---------- Data Siswa ---------- */
@@ -1878,13 +1986,13 @@ md(`<h3>Materi baru</h3>
 <label>Kirim ke kelas <span class="mu">(boleh pilih lebih dari satu)</span></label>
 <div class="row np" style="margin:0 0 6px"><button type="button" class="b g s" onclick="document.querySelectorAll('.mk_s').forEach(x=>x.checked=true)">Pilih semua</button><button type="button" class="b g s" onclick="document.querySelectorAll('.mk_s').forEach(x=>x.checked=false)">Kosongkan</button></div>
 <div class="mkcl">${sl.map(s=>`<label class="mkc"><input type="checkbox" class="mk_s" value="${esc(s[0])}"${one||pre.includes(s[0])?' checked':''}> ${esc(s[1])}</label>`).join('')}</div>
-<label>Berkas materi (opsional: PDF, Word, PPT, gambar, video; maks ${LIM()/1e6} MB)<input id="mk_f" type="file"></label>
+<label>Berkas materi (opsional: semua jenis berkas diproses melalui database)<input id="mk_f" type="file"></label>
 <div class="row"><button class="b" id="mk_ok">Simpan</button><button class="b g" onclick="cm()">Batal</button></div>`);
 $('#mk_ok').onclick=()=>{const j=$('#mk_j').value.trim();if(!j)return alert('Isi judul materi.');
 const ks=[...document.querySelectorAll('.mk_s:checked')].map(x=>x.value);if(!ks.length)return alert('Pilih minimal satu kelas.');
 const ic=mikGet(),judul=(ic?ic+' ':'')+j,isi=$('#mk_i').value,f=$('#mk_f').files[0];
 const fin=(d,n)=>{ks.forEach(s=>{const p=s.split('|'),row={id:uid(),kelas:p[0],mapel:p[1],guru:me.id,tahun:TH,judul,isi,tgl:today()};if(n){row.file=n;row.data=d}db.materi.push(row)});save();cm();draw();if(!SB.url)badge('')};
-if(!f)return fin();badge('Membaca berkas…');rd(f,(d,n)=>fin(d,n))}}
+if(!f)return fin();badge('Menyiapkan berkas…');rd(f,(d,n)=>fin(d,n))}}
 
 function mikon(id){const m=db.materi.find(x=>x.id==id);if(!m)return;const p=mSplit(m.judul);MI_SEL=p[0];MI_MAN=true;
 md(`<h3>Ubah ikon materi</h3><p class="mu">${esc(p[1])}</p><label>Pilih ikon${mikGrid()}</label><div class="row"><button class="b" id="mi_ok">Simpan</button><button class="b g" onclick="cm()">Batal</button></div>`);
@@ -1943,7 +2051,7 @@ md(`<h3>Edit materi</h3><p class="mu">🏫 ${esc(nm('kelas',m.kelas))} · ${esc(
 <label>Berkas materi ${N.length?`<span class="mu">(saat ini: ${esc(N.join(', '))}. Pilih berkas baru hanya jika ingin menggantinya)</span>`:'<span class="mu">(opsional)</span>'}<input id="me_f" type="file"></label>
 <div class="row"><button class="b" id="me_ok">Simpan perubahan</button><button class="b g" onclick="cm()">Batal</button></div>`);
 $('#me_ok').onclick=()=>{const j=$('#me_j').value.trim();if(!j)return alert('Isi judul materi.');const ic=mikGet(),f=$('#me_f').files[0],fin=(d,n)=>{m.judul=(ic?ic+' ':'')+j;m.isi=$('#me_i').value;if(n){m.file=n;m.data=d}save();cm();draw()};
-if(!f)return fin();badge('Membaca berkas…');rd(f,(d,n)=>fin(d,n))}}
+if(!f)return fin();badge('Menyiapkan berkas…');rd(f,(d,n)=>fin(d,n))}}
 
 function tedit(id){const t=db.tugas.find(x=>x.id==id);if(!t||t.guru!=me.id)return;const n0=tNo(t),ks=db.kumpul.filter(k=>k.tugas==id),nl=ks.filter(k=>k.nilai!=null).length;
 md(`<h3>Edit tugas</h3><p class="mu">🏫 ${esc(nm('kelas',t.kelas))} · ${esc(nm('mapel',t.mapel))} · kelas tidak diubah.</p>
