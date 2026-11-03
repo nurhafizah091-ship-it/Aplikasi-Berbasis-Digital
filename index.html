@@ -1888,7 +1888,7 @@ const idn=String(role=='siswa'?o.nis:o.nip||'').trim(),nn=String(o.nama||'').tri
 if(idn){r=C.find(x=>String(x.nip||'').trim()==idn);if(r)return r}
 const M=nn?C.filter(x=>String(x.nama||'').trim().toLowerCase()==nn):[];return M.length==1?M[0]:null}
 async function pfProbe(){if(!SB.url)return;for(const c of ['seen','ref']){if(COLS.pf_user.includes(c))continue;try{await api('pf_user?select='+c+'&limit=1');COLS.pf_user.push(c)}catch(e){}}}
-function pfPing(){try{lgBeat()}catch(e){}if(!me||!me.uid||!SB.url||(window._rlsDeny&&window._rlsDeny.pf_user))return;if(PFE){pfReload().then(()=>{if(!PFE)pfPing()});return}const S=COLS.pf_user.includes('seen'),R0=COLS.pf_user.includes('ref');if(!S&&!R0)return;const r=pfEnsure();if(S)r.seen=new Date().toISOString();if(R0&&me.id)r.ref=me.id;save()}
+function pfPing(){try{lgBeat()}catch(e){}if(!me||!me.uid||!SB.url||(window._rlsDeny&&window._rlsDeny.pf_user))return;if(PFE){pfReload().then(()=>{if(!PFE)pfPing()});return}const S=COLS.pf_user.includes('seen'),R0=COLS.pf_user.includes('ref');if(!S&&!R0)return;const r=pfEnsure(),clean=snap.pf_user&&snap.pf_user.get(r.id)===JSON.stringify(norm('pf_user',r));if(S)r.seen=new Date().toISOString();if(R0&&me.id)r.ref=me.id;if(clean&&TK){const pb={};if(S)pb.seen=r.seen;if(R0&&me.id)pb.ref=r.ref;api('pf_user?id=eq.'+encodeURIComponent(r.id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(pb)}).then(()=>{snap.pf_user.set(r.id,JSON.stringify(norm('pf_user',r)))}).catch(()=>save());return}save()}
 setInterval(()=>{try{if(me&&me.uid&&document.visibilityState=='visible'&&navigator.onLine)pfPing()}catch(e){}},300000);
 const spOn=iso=>{const t=Date.parse(iso||'');return !!t&&Date.now()-t<=10*60000};
 function spAgo(iso){const t=Date.parse(iso||'');if(!t)return'';const m=Math.floor((Date.now()-t)/6e4);if(m<1)return'baru saja';if(m<60)return m+' menit lalu';const h=Math.floor(m/60);if(h<24)return h+' jam lalu';const d=Math.floor(h/24);return d<30?d+' hari lalu':new Date(t).toLocaleDateString('id-ID')}
@@ -2391,5 +2391,219 @@ ${tgiUI()}
 tgiDraw();$('#te_ok').onclick=async()=>{const n=parseInt($('#te_n').value,10)||0,jn=$('#te_k').value.trim(),tp=$('#te_j').value.trim(),due=$('#te_t').value;if(!due)return alert('Isi tenggat.');if(!jn&&!(n>0)&&!tp)return alert('Isi jenis, nomor, atau judul.');
 const chg=TGI.length||TGX.some(x=>!x.keep);let pk=null;if(chg){const btn=$('#te_ok');btn.disabled=true;btn.textContent='Mengunggah berkas…';pk=await tgiCollect(id);if(!pk){btn.disabled=false;btn.textContent='Simpan perubahan';return}}
 t.judul=tJudul(jn,n,tp);t.desc=$('#te_d').value;t.due=due;if(pk)tpack(t,pk.names,pk.datas);save();cm();draw()}}
-</script><script>if('serviceWorker'in navigator&&location.protocol.indexOf('http')==0)addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){})})</script>
+</script>
+<script>
+/* ===== REALTIME: sinkron otomatis antar perangkat (Supabase Realtime + cadangan polling) ===== */
+(()=>{
+if(typeof SB==='undefined'||!SB.url)return;
+const WSU='wss://'+SB.url.replace(/^https?:\/\//,'').replace(/\/+$/,'')+'/realtime/v1/websocket?apikey='+encodeURIComponent(SB.key)+'&vsn=1.0.0';
+const TOPIC='realtime:public',QUIET=['seen','ref'],BIG=['foto','logo'];
+let ws=null,joined=false,joinRef='',seq=0,hbT=null,hbOk=true,retry=0,rtT=null,sentTK=null,downAt=0,hiddenAt=0,uidOn=null,lastPull=0,lastFull=0,sysErr=false,flT=null,pend=false,own=false,photoCh=false,everUp=false;
+const ch=new Set();
+const meN=()=>{try{return me}catch(e){return null}};
+const nref=()=>String(++seq);
+const send=o=>{try{if(ws&&ws.readyState===1)ws.send(JSON.stringify(o))}catch(e){}};
+const jwtExp=t=>{try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).exp}catch(e){return 0}};
+const pfK=()=>{try{return String(pfKey())}catch(e){return ''}};
+
+/* ---------- menerapkan data dari server ke db + snap (tanpa memicu push ulang) ---------- */
+function rowOf(t,x,old,partial){
+  const o=old?{...old}:{};
+  COLS[t].forEach(c=>{
+    if(LZ[t]&&LZ[t].includes(c))return;
+    if(!(c in x))return;
+    const v=x[c];
+    if(v===null||v===undefined){if(partial&&BIG.includes(c))return;delete o[c]}else o[c]=v;
+  });
+  return o;
+}
+function upsert(t,rec,partial){
+  if(!COLS[t]||!rec||rec.id==null)return;
+  const L=db[t]||(db[t]=[]),S=snap[t]||(snap[t]=new Map());
+  const i=L.findIndex(x=>x.id==rec.id),old=i>=0?L[i]:null;
+  if(old&&S.get(old.id)!==JSON.stringify(norm(t,old)))return;          /* ada perubahan lokal yang belum terkirim: jangan ditimpa */
+  const nw=rowOf(t,rec,old,partial),n=norm(t,nw),after=JSON.stringify(n),before=old?JSON.stringify(norm(t,old)):null;
+  S.set(n.id,after);
+  if(before===after)return;
+  if(i>=0)L[i]=nw;else L.push(nw);
+  note(t,rec.id,old,nw);
+}
+function remove(t,id){
+  if(!COLS[t]||id==null)return;
+  const L=db[t]||[],S=snap[t]||(snap[t]=new Map()),i=L.findIndex(x=>x.id==id);
+  if(i<0){S.delete(id);return}
+  const old=L[i];
+  if(S.has(old.id)&&S.get(old.id)!==JSON.stringify(norm(t,old)))return;
+  L.splice(i,1);S.delete(old.id);note(t,id,old,null);
+}
+function note(t,id,old,nw){
+  if(t==='pf_user'){
+    const a=old||{},b=nw||{},keys=new Set([...Object.keys(a),...Object.keys(b)]);
+    const diff=[...keys].filter(k=>a[k]!==b[k]&&!QUIET.includes(k));
+    if(!diff.length)return;
+    if(String(id)===pfK()){
+      own=true;
+      if(diff.every(k=>k==='foto'||k==='tgl')){photoCh=true;queue();return}
+    }
+  }
+  ch.add(t);queue();
+}
+function applyChange(d){
+  if(!d||d.schema!=='public'||!COLS[d.table])return;
+  if(d.type==='DELETE'){remove(d.table,d.old_record&&d.old_record.id)}
+  else if(d.record){upsert(d.table,d.record,d.type==='UPDATE')}
+}
+
+/* ---------- memperbarui tampilan tanpa mengganggu pengguna ---------- */
+const safe=()=>{
+  try{if(typeof LD!=='undefined'&&LD)return false}catch(e){}
+  const m=document.getElementById('m');if(m&&m.style.display!=='none'&&m.innerHTML.trim())return false;
+  const a=document.activeElement;if(a&&a!==document.body&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.closest&&a.closest('#app'))return false;
+  return true;
+};
+function photoNow(){
+  const f=pfMine();if(!f)return false;let n=0;
+  document.querySelectorAll('img[onclick="pfBig()"]').forEach(im=>{['data-try','data-o','data-c'].forEach(k=>im.removeAttribute(k));im.src=f;n++});
+  return n>0;
+}
+function redraw(){
+  const se=document.scrollingElement,mn=document.querySelector('main'),a=se?se.scrollTop:0,b=mn?mn.scrollTop:0;
+  draw();
+  const s2=document.scrollingElement,m2=document.querySelector('main');if(s2)s2.scrollTop=a;if(m2)m2.scrollTop=b;
+}
+function queue(){clearTimeout(flT);flT=setTimeout(flush,300)}
+function flush(){
+  flT=null;
+  if(!meN()){ch.clear();own=photoCh=pend=false;return}
+  if(!ch.size&&!own&&!photoCh&&!pend)return;
+  const nm0=me.nama;
+  if(own){try{pfApply()}catch(e){}}
+  if(photoCh){if(!photoNow())ch.add('pf_user')}
+  if(me.nama!==nm0)ch.add('pf_user');
+  own=photoCh=false;
+  if(ch.size===1&&ch.has('chat')&&document.getElementById('cb')&&document.getElementById('cr')){ch.clear();try{chatBind()}catch(e){}try{OFF.dirty()}catch(e){}return}
+  if(!ch.size&&!pend){try{OFF.dirty()}catch(e){}return}
+  if(document.visibilityState==='hidden'||!safe()){pend=true;return}
+  ch.clear();pend=false;
+  try{redraw()}catch(e){console.warn('Realtime: gagal menggambar ulang',e)}
+  try{OFF.dirty()}catch(e){}
+}
+
+/* ---------- ambil ulang data yang terlewat (setelah koneksi putus / tab lama tersembunyi) ---------- */
+async function syncTable(t){
+  if(t==='pf_user'){
+    const k=pfK();if(!k)return;
+    const r=await api('pf_user?id=eq.'+encodeURIComponent(k)+'&select=*');
+    r.forEach(x=>upsert(t,x,false));return;
+  }
+  const rows=await api(t+'?select='+(LZ[t]?COLS[t].filter(c=>!LZ[t].includes(c)).join(','):'*')+'&limit=10000');
+  rows.forEach(x=>upsert(t,x,false));
+  const ids=new Set(rows.map(r=>r.id));
+  [...(db[t]||[])].forEach(x=>{if(!ids.has(x.id)&&snap[t]&&snap[t].has(x.id))remove(t,x.id)});
+}
+async function doCatch(light){
+  if(!meN()||!TK)return;
+  const T=light?['pf_user','chat','info','kal','profil']:Object.keys(COLS);
+  for(const t of T){try{await syncTable(t)}catch(e){if(OFF.isNet(e))break}}
+}
+function catchUp(light){
+  if(!light){const n=Date.now();if(n-lastFull<20000)return;lastFull=n}
+  busy=busy.then(()=>doCatch(light)).catch(()=>{});
+}
+
+/* ---------- koneksi WebSocket ke Supabase Realtime ---------- */
+function stopHb(){clearInterval(hbT);hbT=null}
+function drop(){
+  const w=ws;ws=null;joined=false;stopHb();if(!downAt)downAt=Date.now();
+  try{w&&w.close()}catch(e){}
+}
+function sched(){
+  if(rtT||!meN())return;
+  const d=Math.min(30000,1000*Math.pow(2,retry++))+Math.random()*500;
+  rtT=setTimeout(()=>{rtT=null;connect()},d);
+}
+async function tokenCheck(){
+  try{
+    const e=jwtExp(TK);
+    if(RT&&e&&e*1000-Date.now()<120000)await refresh();
+    if(TK&&TK!==sentTK&&joined){sentTK=TK;send({topic:TOPIC,event:'access_token',payload:{access_token:TK},ref:nref()})}
+  }catch(e){}
+}
+function beat(){
+  if(!ws)return;
+  if(!hbOk){drop();sched();return}
+  hbOk=false;send({topic:'phoenix',event:'heartbeat',payload:{},ref:nref()});tokenCheck();
+}
+function onJoined(){
+  joined=true;retry=0;sysErr=false;
+  try{badge('🟢 Realtime aktif')}catch(e){}
+  const gap=downAt?Date.now()-downAt:0;downAt=0;
+  if(!everUp){everUp=true;if(Date.now()-lastPull>10000)catchUp(false)}
+  else if(gap>10000)catchUp(false);
+}
+function connect(){
+  if(ws||!meN()||!TK)return;
+  let w;try{w=new WebSocket(WSU)}catch(e){sched();return}
+  ws=w;uidOn=meN().uid;
+  w.onopen=()=>{
+    if(w!==ws)return;
+    joinRef=nref();sentTK=TK;hbOk=true;
+    send({topic:TOPIC,event:'phx_join',payload:{config:{broadcast:{ack:false,self:false},presence:{key:''},postgres_changes:[{event:'*',schema:'public'}]},access_token:TK},ref:joinRef});
+    stopHb();hbT=setInterval(beat,25000);
+  };
+  w.onmessage=ev=>{
+    if(w!==ws)return;
+    let m;try{m=JSON.parse(ev.data)}catch(e){return}
+    if(m.topic==='phoenix'){hbOk=true;return}
+    if(m.topic!==TOPIC)return;
+    const p=m.payload||{};
+    if(m.event==='phx_reply'){
+      if(String(m.ref)===joinRef){
+        if(p.status==='ok')onJoined();
+        else{console.warn('Realtime: gagal bergabung',p);sysErr=true;drop();sched()}
+      }
+      return;
+    }
+    if(m.event==='postgres_changes'){applyChange(p.data);return}
+    if(m.event==='system'){
+      if(p.status==='error'){
+        sysErr=true;console.warn('Realtime: ',p.message||p);
+        if(!window._rtWarn){window._rtWarn=1;try{badge('⚠ Realtime belum aktif di database (jalankan supabase_realtime.sql). Memakai mode cadangan.',1)}catch(e){}}
+      }else if(p.status==='ok')sysErr=false;
+      return;
+    }
+    if(m.event==='phx_close'||m.event==='phx_error'){drop();sched()}
+  };
+  w.onclose=()=>{if(w===ws){drop();sched()}};
+  w.onerror=()=>{try{w.close()}catch(e){}};
+}
+function shutdown(){
+  const w=ws;ws=null;joined=false;stopHb();clearTimeout(rtT);rtT=null;retry=0;downAt=0;everUp=false;uidOn=null;
+  ch.clear();own=photoCh=pend=false;try{w&&w.close()}catch(e){}
+}
+
+/* ---------- pemicu ---------- */
+setInterval(()=>{
+  const m=meN(),on=!!(m&&m.uid&&TK);
+  if(ws&&(!on||(uidOn&&m&&m.uid!==uidOn)))shutdown();
+  if(on&&!ws&&!rtT)connect();
+},2000);
+setInterval(()=>{if(meN()&&TK&&document.visibilityState==='visible'&&(!joined||sysErr))catchUp(true)},20000);
+setInterval(()=>{if(pend&&meN()&&document.visibilityState==='visible'&&safe())flush()},1500);
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
+  if(!meN())return;
+  const away=hiddenAt?Date.now()-hiddenAt:0;hiddenAt=0;
+  if(ws&&ws.readyState===1){hbOk=false;send({topic:'phoenix',event:'heartbeat',payload:{},ref:nref()});setTimeout(()=>{if(ws&&!hbOk){drop();sched()}},5000)}
+  else if(!ws){clearTimeout(rtT);rtT=null;retry=0;connect()}
+  if(away>90000)catchUp(false);else if(away>15000)catchUp(true);
+  if(pend&&safe())flush();
+});
+addEventListener('online',()=>{if(!meN())return;retry=0;if(ws&&ws.readyState!==1)drop();clearTimeout(rtT);rtT=null;if(!ws)connect()});
+if(typeof pull==='function'){const p0=pull;pull=async function(){const r=await p0.apply(this,arguments);lastPull=Date.now();return r}}
+window.rtSync=()=>catchUp(false);
+window.rtStatus=()=>({terhubung:joined,socket:ws?ws.readyState:null,cadangan:sysErr});
+})();
+</script>
+<script>if('serviceWorker'in navigator&&location.protocol.indexOf('http')==0)addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){})})</script>
 </body></html>
