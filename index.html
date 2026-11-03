@@ -897,8 +897,8 @@ master(){const T={siswa:'Siswa',guru:'Guru',kelas:'Kelas',mapel:'Mata Pelajaran'
 jadwal(){const hr=['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],ed=me.role=='admin'||me.role=='guru';const j=db.jadwal.filter(x=>x.tahun==TH&&(me.role=='guru'?x.guru==me.id:me.role=='siswa'?x.kelas==myKelas():1)&&mf(x.mapel)).sort((a,b)=>hr.indexOf(a.hari)-hr.indexOf(b.hari)||(a.jam||'').localeCompare(b.jam||''));
 return`<div class="card">${ed?`<div class="row"><button class="b" onclick="jadd()">+ Tambah Jadwal</button><button class="b d" onclick="hapusSemua('jadwal')">🗑 Hapus Semua</button></div>`:''}${tbl(['Hari','Jam','Kelas','Mapel','Guru',ed?'Aksi':''],j.map(x=>[x.hari||'-',x.jam||'-',esc(nm('kelas',x.kelas)),esc(nm('mapel',x.mapel)),esc(nm('guru',x.guru)),ed?X('jadwal',x.id):'']))}</div>`},
 materi(){return mPage()},
-tugas(){const L=tSort(tBase().filter(t=>me.role=='siswa'||!TKF||t.kelas==TKF));setTimeout(tgiLoad,0);
-return`${kgui()}${me.role=='siswa'?tgProg(L):''}<div class="card">${me.role=='siswa'?'':`<div class="row np">${me.role=='guru'?'<button class="b" onclick="tadd()">+ Buat Tugas / Kuis</button><button class="b d" onclick="hapusSemua(\'tugas\')">🗑 Hapus Semua</button>':''}${me.role=='guru'?'<button class="b" onclick="tgRekapOpen()">👥 Rekap per Siswa</button>':''}<button class="b g" onclick="tugasPrint()">🖨 Cetak Tugas</button></div>`}${tBar()}${tbl(['Tugas','Kelas/Mapel','Tenggat',me.role=='siswa'?'Status':'Selesai/Terkumpul','Aksi'],L.map(t=>{const ks=db.kumpul.filter(k=>k.tugas==t.id),mine=ks.find(k=>k.siswa==me.id),late=t.due<today();
+tugas(){if(TNV=='nilai')return kgui()+tgTabs()+tgNilai();const L=tSort(tBase().filter(t=>me.role=='siswa'||!TKF||t.kelas==TKF));setTimeout(tgiLoad,0);
+return`${kgui()}${tgTabs()}${me.role=='siswa'?tgProg(L):''}<div class="card">${me.role=='siswa'?'':`<div class="row np">${me.role=='guru'?'<button class="b" onclick="tadd()">+ Buat Tugas / Kuis</button><button class="b d" onclick="hapusSemua(\'tugas\')">🗑 Hapus Semua</button>':''}${me.role=='guru'?'<button class="b" onclick="tgRekapOpen()">👥 Rekap per Siswa</button>':''}<button class="b g" onclick="tugasPrint()">🖨 Cetak Tugas</button></div>`}${tBar()}${tbl(['Tugas','Kelas/Mapel','Tenggat',me.role=='siswa'?'Status':'Selesai/Terkumpul','Aksi'],L.map(t=>{const ks=db.kumpul.filter(k=>k.tugas==t.id),mine=ks.find(k=>k.siswa==me.id),late=t.due<today();
 return[`${me.role=='siswa'?tgChk(!!mine):''}<b>${esc(t.judul)}</b><br><span class="mu">${esc(t.desc)}</span>${tgiShow(t)}`.replace('<td>','<td class="w">'),nm('kelas',t.kelas)+' · '+nm('mapel',t.mapel)+(me.role=='guru'?'':' · '+nm('guru',t.guru)),t.due,me.role=='siswa'?(mine?`<span class="tag ok">${kGuru(mine)?'✓ Selesai (oleh guru)':'Terkumpul'}</span>${kGuru(mine)?'':kfl(mine)}${mine.izin=='ya'?' <span class="tag ok">Boleh diubah</span>':mine.izin=='minta'?' <span class="tag">Menunggu izin guru</span>':''}${mine.nilai!=null?` Nilai <b>${mine.nilai}</b>${mine.cat?'<br><span class="mu">'+esc(mine.cat)+'</span>':''}`:''}`:`<span class="tag ${late?'er':''}">${late?'Terlambat':'Belum'}</span>`):ks.length+'/'+db.siswa.filter(x=>x.kelas==t.kelas).length,me.role=='siswa'?(mine?(kGuru(mine)?'':mine.izin=='ya'?`<button class="b s" onclick="kedit('${mine.id}')">Ubah jawaban</button>`:mine.izin=='minta'?'':`<button class="b g s" onclick="kminta('${mine.id}')">Minta izin ubah</button>`):`<button class="b s" onclick="kadd('${t.id}')">Kumpulkan</button>`):me.role=='guru'?`<button class="b s" onclick="kgrade('${t.id}',0,'belum')">Nilai</button> <button class="b g s" onclick="tedit('${t.id}')">✏️ Edit</button> <button class="b g s" onclick="tpantau('${t.id}','kumpul')">👥 Pantau</button>${X('tugas',t.id)}`:me.role=='kepsek'?`<button class="b g s" onclick="kgrade('${t.id}',1,'semua')">Lihat</button> <button class="b g s" onclick="tpantau('${t.id}','kumpul')">👥 Pantau</button>`:'']}))}</div>`},
 absen(){if(me.role=='kepsek')return absenRO();if(me.role=='siswa'){const a=db.absen.filter(x=>x.siswa==me.id&&x.tahun==TH&&sf(x.mapel)).sort((p,q)=>(q.tgl||'').localeCompare(p.tgl||''));return`<div class="card"><div class="row np"><button class="b" onclick="saprint()">🖨 Cetak Kehadiran Saya</button></div>${aSumHTML(aCnt(a),new Set(a.map(x=>x.tgl)).size)}${a.length?tbl(absMHead,absMapel(a))+'<p></p>':''}${tbl(['Tanggal','Mapel','Mode','Status'],a.map(x=>[x.tgl,nm('mapel',x.mapel),x.mode,`<span class="tag ${x.status=='Hadir'?'ok':'er'}">${x.status}</span>`]))}</div>`}
 const S=slots();return`<div class="card"><div class="row"><label>Kelas / Mapel<select id="as" onchange="aform()">${opt(S)}</select></label><label>Tanggal<input type="date" id="at" value="${today()}"></label><label>Mode<select id="am">${opt([['Tatap muka','Tatap muka'],['Daring','Daring']])}</select></label></div><div id="af"></div></div><div class="card"><h3>📊 Rekapitulasi Kehadiran</h3><p class="mu">Total kehadiran dan persentase Hadir, Sakit, Izin, serta Alpa untuk kelas dan mapel yang dipilih di atas.</p><div class="row np"><label>Dari tanggal<input type="date" id="ad1" onchange="arekap()"></label><label>Sampai tanggal<input type="date" id="ad2" onchange="arekap()"></label><button class="b" onclick="aprint()">🖨 Cetak Absensi</button></div><div id="arb"></div></div>`},
@@ -2328,6 +2328,62 @@ const tBase=()=>db.tugas.filter(t=>me.role=='siswa'?t.kelas==myKelas()&&t.tahun=
 const tSort=a=>[...a].sort((x,y)=>String(nm('kelas',x.kelas)).localeCompare(nm('kelas',y.kelas))||String(nm('mapel',x.mapel)).localeCompare(nm('mapel',y.mapel))||String(tJns(x)).localeCompare(tJns(y))||((tNo(x)??1e9)-(tNo(y)??1e9))||String(x.due||'').localeCompare(String(y.due||'')));
 function tBar(){if(me.role=='siswa')return'';const base=tBase();let ks=[...new Set(base.map(t=>t.kelas))];if(me.role=='guru')ks=[...new Set([...slots().map(s=>s[0].split('|')[0]),...ks])];if(TKF&&!ks.includes(TKF))TKF='';
 return ks.length>1?`<div class="mkf np"><button class="b s ${TKF?'g':''}" onclick="tSet('')">Semua kelas (${base.length})</button>${ks.map(k=>`<button class="b s ${TKF==k?'':'g'}" onclick="tSet('${k}')">🏫 ${esc(nm('kelas',k))} (${base.filter(t=>t.kelas==k).length})</button>`).join('')}</div>`:''}
+
+/* ===== v22: NILAI pada menu Tugas (siswa, guru, kepala sekolah) ===== */
+let TNV='tugas',TNJ='',TNM='',TNK='';const TN_KKM=75;
+const tnSet=v=>{TNV=v;draw()};
+const tnIsKuis=t=>isKuisT(t)||/kuis|quiz/i.test(String(tJns(t)||''));
+const tnJenis=t=>tnIsKuis(t)?'Kuis':'Tugas';
+const tnNum=v=>v==null||v===''||isNaN(+v)?null:+v;
+const tnAvg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+const tnF=v=>v==null?'-':String(Math.round(v*10)/10);
+const tnTag=v=>v==null?'<span class="mu">-</span>':`<span class="tag ${v>=TN_KKM?'ok':v<60?'er':''}"><b>${tnF(v)}</b></span>`;
+const tnStat=(l,v)=>`<div style="flex:1 1 130px;border:1px solid var(--bd);border-radius:10px;padding:10px 12px;background:var(--sf)"><div class="mu" style="font-size:12px">${l}</div><b style="font-size:20px">${v}</b></div>`;
+function tgTabs(){return`<div class="row np" style="margin-bottom:8px"><button class="b ${TNV=='tugas'?'':'g'}" onclick="tnSet('tugas')">📝 Daftar Tugas</button><button class="b ${TNV=='nilai'?'':'g'}" onclick="tnSet('nilai')">💯 Nilai Tugas &amp; Kuis</button></div>`}
+function tgNilai(){return me.role=='siswa'?tnSiswa():tnGuru()}
+const tnFilter=(ms,ks)=>`<div class="row np">${ks?`<label>Kelas<select onchange="TNK=this.value;TNM='';draw()">${opt(ks.map(k=>[k,nm('kelas',k)]),TNK)}</select></label>`:''}<label>Mata pelajaran<select onchange="TNM=this.value;draw()">${opt([['','Semua mapel'],...ms.map(m=>[m,nm('mapel',m)])],TNM)}</select></label><label>Jenis<select onchange="TNJ=this.value;draw()">${opt([['','Tugas & Kuis'],['Tugas','Tugas saja'],['Kuis','Kuis saja']],TNJ)}</select></label></div>`;
+
+/* ---- tampilan siswa ---- */
+function tnSiswa(){
+const all=tSort(tBase()),ms=[...new Set(all.map(t=>t.mapel))];if(TNM&&!ms.includes(TNM))TNM='';
+const L=all.filter(t=>(!TNM||t.mapel==TNM)&&(!TNJ||tnJenis(t)==TNJ)),my=new Map(db.kumpul.filter(k=>k.siswa==me.id).map(k=>[k.tugas,k]));
+const R=L.map(t=>{const k=my.get(t.id);return{t,k,v:k?tnNum(k.nilai):null}}),vs=R.map(r=>r.v).filter(v=>v!=null);
+const per=ms.filter(m=>!TNM||m==TNM).map(m=>{const a=R.filter(r=>r.t.mapel==m),v=a.map(r=>r.v).filter(x=>x!=null);return[esc(nm('mapel',m)),a.length,v.length,tnTag(tnAvg(v)),v.length?tnF(Math.max(...v)):'-',v.length?tnF(Math.min(...v)):'-',a.length]}).filter(r=>r[6]>0).map(r=>r.slice(0,6));
+const rows=R.map((r,i)=>{const t=r.t,k=r.k,late=t.due&&t.due<today(),tp=tNo(t)!=null?tTopik(t):'';
+return[i+1,`<b>${esc(tLbl(t))}</b>${tp?'<br><span class="mu">'+esc(tp)+'</span>':''}`,esc(nm('mapel',t.mapel))+'<br><span class="mu" style="font-size:12px">'+esc(nm('guru',t.guru))+'</span>',`<span class="tag">${tnJenis(t)}</span>`,esc(t.due||'-'),k?esc(k.tgl||'-'):'-',tnTag(r.v),k&&k.cat?esc(k.cat):'<span class="mu">-</span>',k?(r.v!=null?'<span class="tag ok">Sudah dinilai</span>':kGuru(k)?'<span class="tag ok">Selesai (oleh guru)</span>':'<span class="tag">Menunggu nilai</span>'):`<span class="tag ${late?'er':''}">${late?'Terlambat / belum':'Belum mengumpulkan'}</span>`]});
+return`<div class="card"><h3>💯 Nilai Tugas &amp; Kuis Saya</h3><p class="mu" style="margin-top:0;font-size:13px">Daftar nilai semua tugas dan kuis yang sudah Anda kerjakan, lengkap dengan catatan dari guru. Tahun ajaran <b>${esc(nm('tahun',TH))}</b>.</p>${tnFilter(ms,null)}<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">${tnStat('Rata-rata nilai',tnF(tnAvg(vs)))}${tnStat('Nilai tertinggi',vs.length?tnF(Math.max(...vs)):'-')}${tnStat('Nilai terendah',vs.length?tnF(Math.min(...vs)):'-')}${tnStat('Sudah dinilai',vs.length+'/'+R.length)}${tnStat('Belum dikumpulkan',R.filter(r=>!r.k).length)}</div></div>
+<div class="card"><h3>Rekap per Mata Pelajaran</h3>${tbl(['Mata pelajaran','Jumlah tugas/kuis','Sudah dinilai','Rata-rata','Tertinggi','Terendah'],per)}</div>
+<div class="card"><h3>Daftar Nilai</h3>${tbl(['No','Tugas / Kuis','Mapel / Guru','Jenis','Tenggat','Dikumpulkan','Nilai','Catatan guru','Status'],rows)}<p class="mu" style="font-size:12px">Warna nilai: hijau ≥ ${TN_KKM}, merah &lt; 60.</p></div>`}
+
+/* ---- data matriks nilai (guru & kepala sekolah) ---- */
+function tnData(){
+let ks=[...new Set(tBase().map(t=>t.kelas))];if(me.role=='guru')ks=[...new Set([...slots().map(s=>s[0].split('|')[0]),...ks])];if(!ks.length)return null;
+if(!TNK||!ks.includes(TNK))TNK=ks[0];
+let T=tSort(tBase().filter(t=>t.kelas==TNK));const ms=[...new Set(T.map(t=>t.mapel))];if(TNM&&!ms.includes(TNM))TNM='';
+if(TNM)T=T.filter(t=>t.mapel==TNM);if(TNJ)T=T.filter(t=>tnJenis(t)==TNJ);
+const S=swKelas(TNK),M=new Map(db.kumpul.map(k=>[k.tugas+'|'+k.siswa,k])),multiM=new Set(T.map(t=>t.mapel)).size>1;
+const rows=S.map(s=>{const cells=T.map(t=>{const k=M.get(t.id+'|'+s.id),v=k?tnNum(k.nilai):null;return{v,k,txt:v!=null?tnF(v):k?(kGuru(k)?'Selesai':'Terkumpul'):'-'}});const vs=cells.map(c=>c.v).filter(v=>v!=null);return{s,cells,avg:tnAvg(vs)}});
+const colAvg=T.map((t,j)=>tnAvg(rows.map(r=>r.cells[j].v).filter(v=>v!=null)));
+return{ks,ms,T,S,rows,colAvg,allAvg:tnAvg(rows.flatMap(r=>r.cells.map(c=>c.v)).filter(v=>v!=null)),multiM}}
+
+/* ---- tampilan guru / kepala sekolah ---- */
+function tnGuru(){
+const D=tnData();if(!D)return'<div class="card"><p class="mu">Belum ada kelas atau tugas.</p></div>';
+const ro=me.role!='guru',pend=D.rows.reduce((a,r)=>a+r.cells.filter(c=>c.k&&c.v==null&&!kGuru(c.k)).length,0);
+const head=['No','Nama',...D.T.map(t=>`<span title="${esc(t.judul)}">${esc(tLbl(t))}</span>${D.multiM?'<br><span class="mu" style="font-weight:400;font-size:11px">'+esc(nm('mapel',t.mapel))+'</span>':''}<br><button class="b g s np" onclick="kgrade('${t.id}',${ro?1:0},'semua')">${ro?'Lihat':'✏️ Nilai'}</button>`),'Rata-rata'];
+const rows=D.rows.map((r,i)=>[i+1,'<b>'+esc(r.s.nama)+'</b>',...r.cells.map(c=>c.v!=null?tnTag(c.v):c.k?`<span class="mu" style="font-size:12px">${c.txt}</span>`:'<span class="mu">-</span>'),tnTag(r.avg)]);
+if(D.rows.length&&D.T.length)rows.push(['','<b>Rata-rata kelas</b>',...D.colAvg.map(tnTag),tnTag(D.allAvg)]);
+return`<div class="card"><h3>💯 Daftar Nilai Tugas &amp; Kuis</h3><p class="mu" style="margin-top:0;font-size:13px">Nilai setiap siswa untuk semua tugas dan kuis${ro?' (hanya lihat)':''}. ${ro?'':'Klik <b>✏️ Nilai</b> di bawah judul tugas untuk mengisi atau mengubah nilai. '}Tahun ajaran <b>${esc(nm('tahun',TH))}</b>.</p>${tnFilter(D.ms,D.ks)}<div class="row np"><button class="b g" onclick="tnPrint()">🖨 Cetak</button><button class="b g" onclick="tnCsv()">⬇ Excel (CSV)</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">${tnStat('Jumlah siswa',D.S.length)}${tnStat('Tugas / kuis',D.T.length)}${tnStat('Rata-rata kelas',tnF(D.allAvg))}${tnStat('Menunggu penilaian',pend)}</div>${tbl(head,rows)}<p class="mu" style="font-size:12px">Keterangan: <i>Terkumpul</i> = sudah dikumpulkan, belum dinilai; <i>-</i> = belum mengumpulkan. Warna nilai: hijau ≥ ${TN_KKM}, merah &lt; 60.</p></div>`}
+function tnPrint(){const D=tnData();if(!D||!D.S.length||!D.T.length)return alert('Belum ada data untuk dicetak.');
+const head=['No','NIS','Nama',...D.T.map(t=>esc(tLbl(t))+(D.multiM?'<br>'+esc(nm('mapel',t.mapel)):'')),'Rata-rata'];
+const rows=D.rows.map((r,i)=>[i+1,esc(r.s.nis),esc(r.s.nama),...r.cells.map(c=>esc(c.txt)),tnF(r.avg)]);rows.push(['','','<b>Rata-rata kelas</b>',...D.colAvg.map(v=>'<b>'+tnF(v)+'</b>'),'<b>'+tnF(D.allAvg)+'</b>']);
+printDoc('DAFTAR NILAI TUGAS DAN KUIS','Kelas '+esc(nm('kelas',TNK))+(TNM?' · '+esc(nm('mapel',TNM)):'')+' · Tahun ajaran '+esc(nm('tahun',TH)),tbl(head,rows),me.role=='guru'?me.id:(KG||''))}
+function tnCsv(){const D=tnData();if(!D||!D.S.length||!D.T.length)return alert('Belum ada data untuk diunduh.');
+const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',H=['No','NIS','Nama',...D.T.map(t=>tLbl(t)+(D.multiM?' ('+nm('mapel',t.mapel)+')':'')),'Rata-rata'];
+const Ls=[H,...D.rows.map((r,i)=>[i+1,r.s.nis,r.s.nama,...r.cells.map(c=>c.txt),tnF(r.avg)]),['','','Rata-rata kelas',...D.colAvg.map(tnF),tnF(D.allAvg)]];
+const b=new Blob(['\ufeff'+Ls.map(l=>l.map(q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+a.href=URL.createObjectURL(b);a.download='nilai-tugas-'+String(nm('kelas',TNK)).replace(/[^\w-]+/g,'_')+'.csv';document.body.appendChild(a);a.click();a.remove()}
+SUBT.tugas='Tugas, kuis, pengumpulan, dan daftar nilai';
 
 /* ===== Lampiran (berkas, gambar, video, dll) pada tugas/kuis ===== */
 const TGMAX=10;let TGI=[],TGX=[];
