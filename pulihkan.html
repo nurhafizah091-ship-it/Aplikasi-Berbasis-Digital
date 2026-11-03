@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pemulihan Data ABD</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;background:#f1f5f9;color:#0f172a}
+main{max-width:720px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid #cbd5e1;border-radius:12px;padding:14px;margin:12px 0}
+button{background:#2563eb;color:#fff;border:0;border-radius:8px;padding:11px 14px;font-size:15px;margin:4px 4px 4px 0;cursor:pointer}
+button.g{background:#475569}
+.warn{border-color:#f59e0b;background:#fffbeb}
+.ok{color:#15803d;font-weight:600}.er{color:#b91c1c;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid #e2e8f0;padding:5px;text-align:left}
+small{color:#475569}
+@media(prefers-color-scheme:dark){body{background:#0f172a;color:#e2e8f0}.card{background:#1e293b;border-color:#334155}.warn{background:#422006}td,th{border-color:#334155}small{color:#94a3b8}}
+</style></head><body><main>
+<h1>Pemulihan Data ABD</h1>
+<div class="card warn"><b>Aman dipakai.</b> Halaman ini hanya <b>membaca</b> salinan data yang tersimpan di perangkat ini dan menyimpannya ke berkas. Ia tidak mengubah, menghapus, atau mengirim apa pun ke internet. Jangan login ke aplikasi ABD di perangkat ini sebelum berkas diunduh.</div>
+<button id="scan">1. Cari salinan data di perangkat ini</button>
+<div id="out"></div>
+<script>
+const COLS={
+  kumpul:['id','tugas','siswa','teks','file','data','tgl','nilai','cat','izin'],
+  tugas:['id','kelas','mapel','judul','desc','due','guru','tahun','file','data'],
+  nilai:['id','siswa','mapel','guru','tahun','jenis','ket','skor']
+};
+let SN=[];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* Hanya membaca. Bila basis data belum pernah ada, pembukaan dibatalkan agar tidak membuat apa pun. */
+function readAll(){return new Promise((ok,no)=>{
+  if(!window.indexedDB)return no(new Error('Peramban tidak mendukung IndexedDB.'));
+  let none=false;const r=indexedDB.open('abd_offline');
+  r.onupgradeneeded=()=>{none=true;try{r.transaction.abort()}catch(e){}};
+  r.onerror=()=>none?ok([]):no(r.error);
+  r.onsuccess=()=>{
+    const d=r.result;
+    if(!d.objectStoreNames.contains('kv')){d.close();return ok([])}
+    const out=[],t=d.transaction('kv','readonly'),c=t.objectStore('kv').openCursor();
+    c.onsuccess=()=>{const x=c.result;if(x){if(String(x.key).startsWith('u:')&&x.value&&x.value.db)out.push({key:String(x.key),v:x.value});x.continue()}};
+    t.oncomplete=()=>{d.close();ok(out)};
+    t.onerror=()=>{d.close();no(t.error)};
+  };
+})}
+
+/* gabungkan baris dari semua salinan; utamakan yang punya lampiran */
+function merge(t){
+  const m=new Map();
+  SN.forEach(s=>(s.v.db[t]||[]).forEach(r=>{
+    const x={...r},fc=(s.v.fc||{})[t+r.id];
+    if(!x.data&&fc)x.data=fc;
+    const o=m.get(x.id);
+    if(!o||(!o.data&&x.data))m.set(x.id,x);
+  }));
+  return [...m.values()];
+}
+const q=v=>v==null?'':'"'+String(v).replace(/"/g,'""')+'"';
+const toCsv=(rows,cols)=>'\ufeff'+cols.join(',')+'\n'+rows.map(r=>cols.map(c=>q(r[c])).join(',')).join('\n');
+function save(name,text,mime){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:mime||'text/csv;charset=utf-8'}));
+  a.download=name;document.body.appendChild(a);a.click();a.remove();
+}
+const cl=(rows,cols)=>rows.map(r=>{const o={};cols.forEach(c=>o[c]=r[c]??null);return o});
+
+function show(){
+  const K=merge('kumpul'),T=merge('tugas'),N=merge('nilai'),KL=K.filter(r=>r.data).length;
+  $('#out').innerHTML=
+   `<div class="card"><b class="ok">Ditemukan ${SN.length} salinan data.</b><table><tr><th>Akun</th><th>Peran</th><th>Disimpan</th><th>Kumpul</th><th>Tugas</th></tr>`+
+   SN.map(s=>`<tr><td>${esc(s.v.me&&s.v.me.nama)}</td><td>${esc(s.v.me&&s.v.me.role)}</td><td>${s.v.ts?esc(new Date(s.v.ts).toLocaleString('id-ID')):'-'}</td><td>${(s.v.db.kumpul||[]).length}</td><td>${(s.v.db.tugas||[]).length}</td></tr>`).join('')+
+   `</table><p><b>Setelah digabung:</b> ${K.length} pengumpulan tugas (${KL} dengan lampiran), ${T.length} tugas, ${N.length} nilai.</p>
+   <small>Salinan berasal dari waktu terakhir akun itu membuka aplikasi dalam keadaan online. Isinya hanya data yang boleh dilihat akun tersebut.</small></div>
+   <div class="card"><b>2. Unduh berkas</b><br>
+   <button id="b1">Cadangan lengkap (JSON)</button>
+   <button id="b2">kumpul.csv (dengan lampiran)</button>
+   <button id="b3" class="g">kumpul_ringan.csv (tanpa lampiran)</button>
+   <button id="b4" class="g">tugas.csv</button>
+   <button id="b5" class="g">nilai.csv</button>
+   <p><small>Unduh <b>cadangan lengkap</b> lebih dulu sebagai arsip. Untuk memasukkan kembali ke Supabase: Table Editor → pilih tabel → Insert → Import data from CSV. Jika <b>kumpul.csv</b> terlalu besar, impor <b>kumpul_ringan.csv</b> dulu agar nilai dan teks jawaban kembali.</small></p></div>`;
+  $('#b1').onclick=()=>save('abd_cadangan_lengkap.json',JSON.stringify(SN.map(s=>({kunci:s.key,me:s.v.me,ts:s.v.ts,db:s.v.db,fc:s.v.fc||{}}))),'application/json');
+  $('#b2').onclick=()=>save('kumpul.csv',toCsv(K,COLS.kumpul));
+  $('#b3').onclick=()=>save('kumpul_ringan.csv',toCsv(K.map(r=>({...r,data:null})),COLS.kumpul));
+  $('#b4').onclick=()=>save('tugas.csv',toCsv(T,COLS.tugas));
+  $('#b5').onclick=()=>save('nilai.csv',toCsv(N,COLS.nilai));
+}
+$('#scan').onclick=async()=>{
+  $('#out').innerHTML='<div class="card">Membaca…</div>';
+  try{
+    SN=await readAll();
+    if(!SN.length)$('#out').innerHTML='<div class="card"><b class="er">Tidak ada salinan data ditemukan.</b><p>Pastikan halaman ini dibuka dari alamat (domain) yang sama dengan aplikasi ABD, memakai peramban atau aplikasi yang dulu dipakai membuka ABD, dan data situs belum dihapus.</p></div>';
+    else show();
+  }catch(e){$('#out').innerHTML='<div class="card"><b class="er">Gagal membaca:</b> '+esc(e&&e.message||e)+'</div>'}
+};
+</script>
+</main></body></html>
