@@ -236,6 +236,11 @@ code{background:#eaf1ff;color:#1d4ed8}
 .mkcl{display:flex;flex-direction:column;gap:6px;max-height:170px;overflow:auto;border:1px solid var(--bd);border-radius:10px;padding:8px;margin-bottom:9px}.mkc{display:flex;align-items:center;gap:8px;margin:0;color:var(--tx);font-size:13px}.mkc input{width:auto}
 .mkf{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 .tgp{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}.tgh{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px;margin-bottom:6px}.tgh span{color:var(--mu)}
+.mtb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}.mtb input{flex:1 1 200px;margin:0}.mgn{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.mgs{border:1px solid var(--bd);border-radius:12px;margin:0 0 10px;background:var(--sf)}.mgs>summary{cursor:pointer;padding:10px 12px;font-weight:700;list-style:none;display:flex;gap:8px;align-items:center}.mgs>summary::-webkit-details-marker{display:none}.mgs>summary::before{content:'▾';color:var(--pr)}.mgs:not([open])>summary::before{content:'▸'}.mgs>summary .tag{margin-left:auto}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;padding:0 10px 10px}.mc{border:1px solid var(--bd);border-radius:12px;background:var(--bg);padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-width:0}.mc:hover{border-color:var(--pr)}
+.mc .mt{display:flex;gap:8px;align-items:flex-start}.mc .mik{margin:0;flex:none}.mc b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;font-size:14px}.mc .mm{display:flex;gap:5px;flex-wrap:wrap;align-items:center;font-size:12px}.mc .ma{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto}
+.mgrid.ls{grid-template-columns:1fr}.mgrid.ls .mc{flex-direction:row;align-items:center;flex-wrap:wrap}.mgrid.ls .mt{flex:1 1 220px}.mgrid.ls .ma{margin:0}
 .tgbar{height:12px;border-radius:99px;background:var(--pr2);overflow:hidden}.tgbar.s{height:7px}.tgbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#34d399,#22d3ee);transition:width .4s}
 .tgm{margin-top:10px}.tgl{margin-top:12px;display:flex;flex-direction:column;gap:6px;max-height:240px;overflow:auto}
 .tgi{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;border-radius:10px;background:var(--bg)}.tgi em{margin-left:auto;font-style:normal;color:var(--mu);font-size:12px}.tgi.on span{text-decoration:line-through;color:var(--mu)}
@@ -1662,7 +1667,7 @@ printDoc('REKAPITULASI ABSENSI','Tahun ajaran: '+esc(nm('tahun',TH))+(KG?' · Gu
 
 /* ---------- Akses materi oleh siswa ---------- */
 function mlog(id){if(!me||me.role!='siswa')return;const m=db.materi.find(x=>x.id==id);if(!m)return;const vid='mv_'+id+'_'+me.id;if(ML().some(v=>v.id==vid))return;ML().push({id:vid,materi:id,siswa:me.id,tgl:today()});save()}
-function mbaca(id){const m=db.materi.find(x=>x.id==id);if(!m)return;mlog(id);md(`<h3>${esc(m.judul)}</h3><p class="mu">${esc(nm('kelas',m.kelas))} · ${esc(nm('mapel',m.mapel))} · ${esc(nm('guru',m.guru))} · ${m.tgl||''}</p><p>${esc(m.isi||'-').replace(/\n/g,'<br>')}</p>${fchip('materi',m)}<div class="row"><button class="b" onclick="cm();draw()">Tutup</button></div>`)}
+function mbaca(id){const m=db.materi.find(x=>x.id==id);if(!m)return;mlog(id);md(`<h3>${esc(m.judul)}</h3><p class="mu">${esc(nm('kelas',m.kelas))} · ${esc(nm('mapel',m.mapel))} · ${esc(nm('guru',m.guru))} · ${m.tgl||''} ${mGrp(m)?`<span class="tag">📁 ${esc(mGrp(m))}</span>`:''}</p><p>${esc(mIsi(m)||'-').replace(/\n/g,'<br>')}</p>${fchip('materi',m)}${me.role!='siswa'?mAkses(m):''}<div class="row">${me.role=='guru'&&m.guru==me.id?`<button class="b" onclick="cm();medit('${m.id}')">✏️ Edit</button>`:''}<button class="b g" onclick="cm();draw()">Tutup</button></div>`)}
 const mAkses=m=>{if(me.role=='siswa'){const d=ML().some(v=>v.materi==m.id&&v.siswa==me.id);return`<div class="np" style="margin:6px 0"><button class="b s" onclick="mbaca('${m.id}')">📖 Baca materi</button> ${d?'<span class="tag ok">✓ Sudah dibuka</span>':'<span class="tag">Belum dibuka</span>'}</div>`}
 if(me.role=='guru'||me.role=='kepsek'){const n=db.siswa.filter(x=>x.kelas==m.kelas),v=n.filter(x=>ML().some(y=>y.materi==m.id&&y.siswa==x.id)).length;return`<div class="np" style="margin:6px 0">${MLERR?'<span class="tag er">⚠ Data akses materi belum bisa dibaca. Jalankan supabase_materi_lihat.sql</span> ':''}${!n.length&&SB.url?'<span class="tag er">⚠ Siswa kelas ini belum terbaca. Jalankan supabase_guru_baca_data.sql</span> ':''}<span class="tag ${n.length&&v==n.length?'ok':''}">👁 ${v}/${n.length} siswa sudah membuka</span> <button class="b g s" onclick="mpantau('${m.id}')">Lihat siapa</button></div>`}return''};
 function mpantau(id){const m=db.materi.find(x=>x.id==id);if(!m)return;const sw=swKelas(m.kelas),v=s=>ML().find(y=>y.materi==id&&y.siswa==s.id),ya=sw.filter(v),td=sw.filter(s=>!v(s));
@@ -2280,6 +2285,29 @@ function mikSet(v,typed){MI_MAN=true;v=(v||'').trim();if(!typed&&v==MI_SEL)v='';
 function mikAuto(){if(MI_MAN)return;const t=document.getElementById('mk_j').value,h=MKW.find(x=>x[0].test(t));mikApply(h?h[1]:'')}
 const mikGrid=()=>`<div class="mikg">${MIK.map(i=>`<button type="button" class="mikb${i==MI_SEL?' on':''}" onclick="mikSet('${i}')">${i}</button>`).join('')}</div><input id="mk_ik" value="${esc(MI_SEL)}" placeholder="atau ketik / tempel emoji sendiri" maxlength="8" oninput="mikSet(this.value,1)">`;
 const mikGet=()=>{const x=(MI_SEL||'').match(MIKRE);return x?x[1]:''};
+const MGR=/^\[\[kel:([^\]]*)\]\]\n?/;
+const mGrp=m=>{const x=String(m.isi||'').match(MGR);return x?x[1].trim():''};
+const mIsi=m=>String(m.isi||'').replace(MGR,'');
+const mPack=(g,t)=>(g=(g||'').replace(/[\[\]]/g,'').trim())?'[[kel:'+g+']]\n'+t:t;
+let MGF='',MQ='',MVW=(()=>{try{return localStorage.getItem('mvw')||'grid'}catch(e){return'grid'}})();
+const mGroups=a=>[...new Set(a.map(mGrp).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'id',{numeric:true}));
+const mGlist=()=>`<datalist id="mk_gl">${mGroups(db.materi.filter(m=>m.guru==me.id)).map(g=>`<option value="${esc(g)}">`).join('')}</datalist>`;
+function mgSet(g){MGF=g;draw()}
+function mgVw(v){MVW=v;try{localStorage.setItem('mvw',v)}catch(e){}draw()}
+function mgAll(o){document.querySelectorAll('.mgs').forEach(d=>d.open=o)}
+function mgFind(v){MQ=v;const e=document.getElementById('mt_list');if(e)e.innerHTML=mList()}
+function mBase(){return db.materi.filter(m=>m.tahun==TH&&mf(m.mapel)&&sf(m.mapel)&&(me.role=='siswa'?m.kelas==myKelas():me.role=='guru'?m.guru==me.id:kgok(m)))}
+function mList(){let L=mBase();if(MKF&&me.role!='siswa')L=L.filter(m=>m.kelas==MKF);if(MGF)L=L.filter(m=>mGrp(m)==(MGF=='\u0000'?'':MGF));
+const q=MQ.trim().toLowerCase();if(q)L=L.filter(m=>(mSplit(m.judul)[1]+' '+mIsi(m)+' '+mGrp(m)+' '+fnames(m).join(' ')).toLowerCase().includes(q));
+if(!L.length)return'<p class="mu">Tidak ada materi yang cocok.</p>';
+const G={};L.forEach(m=>{const g=mGrp(m)||'Tanpa kelompok';(G[g]=G[g]||[]).push(m)});
+const ks=Object.keys(G).sort((a,b)=>a=='Tanpa kelompok'?1:b=='Tanpa kelompok'?-1:a.localeCompare(b,'id',{numeric:true})),gr=me.role=='guru';
+return ks.map(g=>`<details class="mgs" open><summary>📁 ${esc(g)} <span class="tag">${G[g].length} materi</span></summary><div class="mgrid${MVW=='list'?' ls':''}">${G[g].sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||'')).map(m=>{const nf=fnames(m).length,st=me.role=='siswa'?(ML().some(v=>v.materi==m.id&&v.siswa==me.id)?'<span class="tag ok">✓ Dibuka</span>':'<span class="tag">Baru</span>'):(()=>{const n=db.siswa.filter(x=>x.kelas==m.kelas),v=n.filter(x=>ML().some(y=>y.materi==m.id&&y.siswa==x.id)).length;return`<span class="tag">👁 ${v}/${n.length}</span>`})();
+return`<div class="mc" onclick="mbaca('${m.id}')"><div class="mt">${mTitle(m).replace('<b>','<b title="">')}</div><div class="mm"><span class="tag">${esc(nm('kelas',m.kelas))} · ${esc(nm('mapel',m.mapel))}</span>${nf?`<span class="tag">📎 ${nf}</span>`:''}${st}<span class="mu">${m.tgl||''}</span></div>${gr?`<div class="ma"><button class="b s" onclick="event.stopPropagation();medit('${m.id}')">✏️ Edit</button><button class="b d s" onclick="event.stopPropagation();del('materi','${m.id}')">🗑</button></div>`:''}</div>`}).join('')}</div></details>`).join('')}
+function mgAtur(){const L=mBase().filter(m=>m.guru==me.id);if(!L.length)return alert('Belum ada materi.');
+md(`<h3>🏷 Atur Kelompok Materi</h3><p class="mu">Centang materi, tulis nama kelompok (mis. Bab 1, Aljabar, Semester 1), lalu Terapkan. Kosongkan nama untuk melepas kelompok.</p><input id="mg_n" list="mk_gl" placeholder="Nama kelompok" maxlength="60">${mGlist()}<div class="row np" style="margin:8px 0"><button type="button" class="b g s" onclick="document.querySelectorAll('.mg_c').forEach(x=>x.checked=true)">Pilih semua</button><button type="button" class="b g s" onclick="document.querySelectorAll('.mg_c').forEach(x=>x.checked=false)">Kosongkan</button></div><div class="mkcl" style="max-height:260px">${L.map(m=>`<label class="mkc"><input type="checkbox" class="mg_c" value="${m.id}"> ${esc(mSplit(m.judul)[1])} <span class="mu">· ${esc(nm('kelas',m.kelas))}${mGrp(m)?' · 📁 '+esc(mGrp(m)):''}</span></label>`).join('')}</div><div class="row"><button class="b" id="mg_ok">Terapkan</button><button class="b g" onclick="cm()">Batal</button></div>`);
+$('#mg_ok').onclick=()=>{const ids=[...document.querySelectorAll('.mg_c:checked')].map(x=>x.value);if(!ids.length)return alert('Centang minimal satu materi.');const g=$('#mg_n').value;ids.forEach(i=>{const m=db.materi.find(x=>x.id==i);if(m&&m.guru==me.id)m.isi=mPack(g,mIsi(m))});save();cm();draw()}}
+
 
 function madd(){const sl=slots();if(!sl.length)return alert('Belum ada kelas dan mapel. Pilih dulu lewat menu Kelas & Siswa.');
 MI_SEL='';MI_MAN=false;
@@ -2287,6 +2315,7 @@ const pre=sl.filter(s=>MKF&&s[0].split('|')[0]==MKF).map(s=>s[0]),one=sl.length=
 md(`<h3>Materi baru</h3>
 <label>Ikon materi <span class="mu">(opsional, otomatis disarankan dari judul)</span>${mikGrid()}</label>
 <label>Judul<input id="mk_j" type="text" oninput="mikAuto()"></label>
+<label>Kelompok materi <span class="mu">(opsional, mis. Bab 1 / Aljabar)</span><input id="mk_g" list="mk_gl" maxlength="60" value="${esc(MGF&&MGF!='\u0000'?MGF:'')}"></label>${mGlist()}
 <label>Isi materi / keterangan<textarea id="mk_i"></textarea></label>
 <label>Kirim ke kelas <span class="mu">(boleh pilih lebih dari satu)</span></label>
 <div class="row np" style="margin:0 0 6px"><button type="button" class="b g s" onclick="document.querySelectorAll('.mk_s').forEach(x=>x.checked=true)">Pilih semua</button><button type="button" class="b g s" onclick="document.querySelectorAll('.mk_s').forEach(x=>x.checked=false)">Kosongkan</button></div>
@@ -2295,7 +2324,7 @@ md(`<h3>Materi baru</h3>
 <div class="row"><button class="b" id="mk_ok">Simpan</button><button class="b g" onclick="cm()">Batal</button></div>`);
 $('#mk_ok').onclick=()=>{const j=$('#mk_j').value.trim();if(!j)return alert('Isi judul materi.');
 const ks=[...document.querySelectorAll('.mk_s:checked')].map(x=>x.value);if(!ks.length)return alert('Pilih minimal satu kelas.');
-const ic=mikGet(),judul=(ic?ic+' ':'')+j,isi=$('#mk_i').value,f=$('#mk_f').files[0];
+const ic=mikGet(),judul=(ic?ic+' ':'')+j,isi=mPack($('#mk_g').value,$('#mk_i').value),f=$('#mk_f').files[0];
 const fin=(d,n)=>{ks.forEach(s=>{const p=s.split('|'),row={id:uid(),kelas:p[0],mapel:p[1],guru:me.id,tahun:TH,judul,isi,tgl:today()};if(n){row.file=n;row.data=d}db.materi.push(row)});save();cm();draw();if(!SB.url)badge('')};
 if(!f)return fin();badge('Menyiapkan berkas…');rd(f,(d,n)=>fin(d,n))}}
 
@@ -2303,14 +2332,16 @@ function mikon(id){const m=db.materi.find(x=>x.id==id);if(!m)return;const p=mSpl
 md(`<h3>Ubah ikon materi</h3><p class="mu">${esc(p[1])}</p><label>Pilih ikon${mikGrid()}</label><div class="row"><button class="b" id="mi_ok">Simpan</button><button class="b g" onclick="cm()">Batal</button></div>`);
 $('#mi_ok').onclick=()=>{const ic=mikGet();m.judul=(ic?ic+' ':'')+p[1];save();cm();draw()}}
 
-function mPage(){const base=db.materi.filter(m=>m.tahun==TH&&mf(m.mapel)&&sf(m.mapel)&&(me.role=='siswa'?m.kelas==myKelas():me.role=='guru'?m.guru==me.id:kgok(m)));
+function mPage(){const base=mBase();
 let ks=[...new Set(base.map(m=>m.kelas))];
 if(me.role=='guru')ks=[...new Set([...slots().map(s=>s[0].split('|')[0]),...ks])];
 if(MKF&&!ks.includes(MKF))MKF='';
-const L=me.role=='siswa'||!MKF?base:base.filter(m=>m.kelas==MKF);
+const B=MKF&&me.role!='siswa'?base.filter(m=>m.kelas==MKF):base,GS=mGroups(B),nol=B.filter(m=>!mGrp(m)).length;
+if(MGF&&MGF!='\u0000'&&!GS.includes(MGF))MGF='';
 const bar=me.role!='siswa'&&ks.length>1?`<div class="mkf np"><button class="b s ${MKF?'g':''}" onclick="mkSet('')">Semua kelas (${base.length})</button>${ks.map(k=>`<button class="b s ${MKF==k?'':'g'}" onclick="mkSet('${k}')">🏫 ${esc(nm('kelas',k))} (${base.filter(m=>m.kelas==k).length})</button>`).join('')}</div>`:'';
+const gb=GS.length?`<div class="mgn np"><button class="b s ${MGF?'g':''}" onclick="mgSet('')">📚 Semua kelompok (${B.length})</button>${GS.map(g=>`<button class="b s ${MGF==g?'':'g'}" data-g="${esc(g)}" onclick="mgSet(this.dataset.g)">📁 ${esc(g)} (${B.filter(m=>mGrp(m)==g).length})</button>`).join('')}${nol?`<button class="b s ${MGF=='\u0000'?'':'g'}" onclick="mgSet('\u0000')">Tanpa kelompok (${nol})</button>`:''}</div>`:'';
 let prog='';if(me.role=='siswa'&&base.length){const d=base.filter(m=>ML().some(v=>v.materi==m.id&&v.siswa==me.id)).length,p=Math.round(d/base.length*100);prog=`<div class="tgp"><div class="tgh"><b>Progres Membaca Materi</b><span>${d} dari ${base.length} materi dibuka · ${p}%</span></div><div class="tgbar"><i style="width:${p}%"></i></div></div>`}
-return`${kgui()}${prog}<div class="card">${me.role=='guru'?`<div class="row"><button class="b" onclick="madd()">+ Tambah Materi</button><button class="b d" onclick="hapusSemua('materi')">🗑 Hapus Semua</button></div>`:''}${bar}${L.map(m=>`<div class="card" style="background:var(--bg)">${mTitle(m)} <span class="tag">${nm('kelas',m.kelas)} · ${nm('mapel',m.mapel)}${me.role=='guru'?'':' · '+esc(nm('guru',m.guru))}</span> <span class="mu">${m.tgl}</span><p>${esc(m.isi)}</p>${fchip('materi',m)}${mAkses(m)}${me.role=='guru'?`<button class="b s" onclick="medit('${m.id}')">✏️ Edit</button> <button class="b g s" onclick="mikon('${m.id}')">🎨 Ubah ikon</button> `+X('materi',m.id):''}</div>`).join('')||'<p class="mu">Belum ada materi'+(MKF?' untuk kelas ini':'')+'</p>'}</div>`}
+return`${kgui()}${prog}<div class="card">${me.role=='guru'?`<div class="row np"><button class="b" onclick="madd()">+ Tambah Materi</button><button class="b g" onclick="mgAtur()">🏷 Atur Kelompok</button><button class="b d" onclick="hapusSemua('materi')">🗑 Hapus Semua</button></div>`:''}${bar}<div class="mtb np"><input type="search" placeholder="🔍 Cari materi…" value="${esc(MQ)}" oninput="mgFind(this.value)"><button class="b s ${MVW=='grid'?'':'g'}" onclick="mgVw('grid')">▦ Kartu</button><button class="b s ${MVW=='list'?'':'g'}" onclick="mgVw('list')">☰ Daftar</button><button class="b g s" onclick="mgAll(true)">Buka semua</button><button class="b g s" onclick="mgAll(false)">Tutup semua</button></div>${gb}<div id="mt_list">${mList()}</div></div>`}
 
 const tgChk=on=>`<span class="tgc${on?' on':''}">${on?'✓':''}</span>`;
 const kGuru=k=>String(k&&k.id).startsWith('gr_');
@@ -2434,10 +2465,11 @@ function medit(id){const m=db.materi.find(x=>x.id==id);if(!m||m.guru!=me.id)retu
 md(`<h3>Edit materi</h3><p class="mu">🏫 ${esc(nm('kelas',m.kelas))} · ${esc(nm('mapel',m.mapel))} · kelas tidak diubah agar data siswa tetap sesuai.</p>
 <label>Ikon materi${mikGrid()}</label>
 <label>Judul<input id="me_j" type="text" value="${esc(p[1])}"></label>
-<label>Isi materi / keterangan<textarea id="me_i">${esc(m.isi||'')}</textarea></label>
+<label>Kelompok materi <span class="mu">(opsional)</span><input id="me_g" list="mk_gl" maxlength="60" value="${esc(mGrp(m))}"></label>${mGlist()}
+<label>Isi materi / keterangan<textarea id="me_i">${esc(mIsi(m))}</textarea></label>
 <label>Berkas materi ${N.length?`<span class="mu">(saat ini: ${esc(N.join(', '))}. Pilih berkas baru hanya jika ingin menggantinya)</span>`:'<span class="mu">(opsional)</span>'}<input id="me_f" type="file"></label>
 <div class="row"><button class="b" id="me_ok">Simpan perubahan</button><button class="b g" onclick="cm()">Batal</button></div>`);
-$('#me_ok').onclick=()=>{const j=$('#me_j').value.trim();if(!j)return alert('Isi judul materi.');const ic=mikGet(),f=$('#me_f').files[0],fin=(d,n)=>{m.judul=(ic?ic+' ':'')+j;m.isi=$('#me_i').value;if(n){m.file=n;m.data=d}save();cm();draw()};
+$('#me_ok').onclick=()=>{const j=$('#me_j').value.trim();if(!j)return alert('Isi judul materi.');const ic=mikGet(),f=$('#me_f').files[0],fin=(d,n)=>{m.judul=(ic?ic+' ':'')+j;m.isi=mPack($('#me_g').value,$('#me_i').value);if(n){m.file=n;m.data=d}save();cm();draw()};
 if(!f)return fin();badge('Menyiapkan berkas…');rd(f,(d,n)=>fin(d,n))}}
 
 function tedit(id){const t=db.tugas.find(x=>x.id==id);if(!t||t.guru!=me.id)return;TGI=[];TGX=fnames(t).map(n=>({name:n,keep:true}));const n0=tNo(t),ks=db.kumpul.filter(k=>k.tugas==id),nl=ks.filter(k=>k.nilai!=null).length;
