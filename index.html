@@ -587,6 +587,51 @@ main{padding:12px 12px 16px}
 @media(max-width:430px) and (min-width:361px){.sg{grid-template-columns:1fr 1fr}}
 @media(max-width:360px){.sg{grid-template-columns:1fr}}
 }
+
+/* ===== BERANDA: KARTU ICON ELEGAN ===== */
+@media screen{
+.hv{background:radial-gradient(700px 440px at 100% 0,#7c3aed1c,transparent 62%),radial-gradient(640px 440px at 35% 112%,#22d3ee1c,transparent 62%),#f4f6fd}
+.hv::before,.hv::after{display:none}
+@media(min-width:901px){.hv-side{background:radial-gradient(#ffffff1c 1px,transparent 1.5px) 0 0/28px 28px,linear-gradient(155deg,#10134a 0%,#271e8e 52%,#4a2bb6 100%);box-shadow:10px 0 40px -22px #10134a99}}
+.hv-main h1{font-family:var(--ab-hf);font-size:clamp(26px,2.8vw,38px);font-weight:700;letter-spacing:-.02em;text-align:left;color:var(--ab-ink);text-shadow:none}
+.hv-main>p{margin:-8px 0 0;text-align:left;font-size:clamp(14px,1.3vw,16px);color:var(--ab-soft)}
+.hv-grid{gap:clamp(14px,1.6vw,22px);animation:abRise .6s cubic-bezier(.2,.7,.2,1) both}
+.hv-c{position:relative;overflow:hidden;isolation:isolate;align-items:flex-start;justify-content:flex-start;text-align:left;gap:18px;padding:clamp(20px,2.6vh,28px) clamp(18px,1.8vw,26px);border-radius:24px;border:1px solid #e3e7f6;background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 1px 2px #151a4a0d,0 22px 40px -26px color-mix(in srgb,var(--c) 70%,#3a35c4);transition:transform .22s,box-shadow .22s,border-color .22s}
+.hv-c:nth-child(n+4){align-items:center;gap:18px}
+.hv-c::after{content:"";position:absolute;right:-56px;top:-64px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--c) 26%,transparent),transparent 68%);z-index:-1;pointer-events:none}
+.hv-c:hover,.hv-c:focus-visible{transform:translateY(-5px);background:#fff;border-color:color-mix(in srgb,var(--c) 50%,#fff);box-shadow:0 1px 2px #151a4a0d,0 32px 50px -24px color-mix(in srgb,var(--c) 85%,#3a35c4)}
+.hv-c:focus-visible{outline:3px solid color-mix(in srgb,var(--c) 60%,#4350e8);outline-offset:3px}
+.hv-ic{width:clamp(56px,5vw,64px);height:clamp(56px,5vw,64px);border-radius:18px;background:linear-gradient(145deg,var(--c),color-mix(in srgb,var(--c) 52%,#4338ca));box-shadow:0 14px 24px -12px var(--c)}
+.hv-ic svg{width:58%;height:58%;color:#fff}
+.hv-tx,.hv-c:nth-child(n+4) .hv-tx{align-items:flex-start;gap:6px;flex:1}
+.hv-tx h3{font-family:var(--ab-hf);font-size:clamp(15px,1.35vw,19px);font-weight:700;letter-spacing:-.01em;color:var(--ab-ink)}
+.hv-tx p{font-size:clamp(12px,.95vw,13.5px);line-height:1.5;color:#5b6794}
+.hv-go{display:inline-flex;align-items:center;margin-top:10px;padding:7px 16px;border-radius:999px;background:color-mix(in srgb,var(--c) 14%,#fff);box-shadow:none;font-size:13px;font-weight:700;color:color-mix(in srgb,var(--c) 45%,#1b2552);transition:background .2s,color .2s}
+.hv-go::after{content:"";width:6px;height:6px;margin-left:9px;border-top:2px solid currentColor;border-right:2px solid currentColor;transform:rotate(45deg);transition:transform .2s}
+.hv-c:hover .hv-go{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 72%,#3730a3),color-mix(in srgb,var(--c) 50%,#3730a3));color:#fff}
+.hv-c:hover .hv-go::after{transform:translateX(3px) rotate(45deg)}
+
+/* tablet/HP: sisi atas gelap, kartu menjadi daftar */
+@media(max-width:900px){
+.hv-side{background:linear-gradient(155deg,#10134a,#271e8e 55%,#4a2bb6);border-radius:0 0 30px 30px;box-shadow:0 22px 40px -26px #271e8e}
+.hv-brand{padding-bottom:22px}
+.hv-main h1{text-align:left}
+}
+@media(max-width:700px){
+.hv-grid{grid-template-columns:1fr;gap:12px}
+.hv-grid>.hv-c:nth-child(n){grid-column:auto;flex-direction:row;align-items:center;text-align:left;gap:14px;padding:14px 38px 14px 14px;border-radius:20px}
+.hv-grid>.hv-c:nth-child(n) .hv-tx{align-items:flex-start;gap:3px}
+.hv-ic{width:52px;height:52px;border-radius:16px}
+.hv-tx h3{font-size:15px}
+.hv-tx p{font-size:12.5px;line-height:1.45}
+.hv-go{display:none}
+.hv-c::before{content:"";position:absolute;right:18px;top:50%;width:8px;height:8px;border-top:2px solid #a3abd0;border-right:2px solid #a3abd0;transform:translateY(-50%) rotate(45deg)}
+.hv-main{padding:20px 14px 30px}
+.hv-main h1{font-size:26px}
+}
+@media(max-width:380px){.hv-tx h3{font-size:14px}.hv-tx p{font-size:12px}.hv-ic{width:46px;height:46px}}
+@media(prefers-reduced-motion:reduce){.hv-grid{animation:none}.hv-c{transition:none}}
+}
 </style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&display=swap"><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171a52"><link rel="icon" href="./icon-192.png"><link rel="apple-touch-icon" href="./icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ABD Sekolah">
 </head><body><div id="app"></div><div id="m" onclick="if(event.target==this)cm()"></div><div id="pr"></div><div id="cp"></div><div id="dev">Pengembang : <b>Abd. Pandrik Lesi, S.Pd.,Gr.</b> &nbsp;|&nbsp; Versi 2026.5</div>
 <script>
@@ -704,7 +749,7 @@ const HM=[
 {k:'guru',t:'Administrasi<br>Guru dan Murid',d:'Rapor siswa, RPP, silabus, dan manajemen kelas.',c:'#e879f9'},
 {k:'pemilos',t:'PEMILOS',d:'Pemilihan Ketua &amp; Wakil Ketua OSIS secara digital. Masuk sebagai pemilih.',c:'#f43f5e'}];
 let PLF=0,KPF=0,PKF=0,TUF=0;
-function home(){PLF=0;KPF=0;PKF=0;TUF=0;$('#app').innerHTML=`<div class="hv"><div class="hv-side"><div class="hv-brand"><div class="hv-markw"><img class="hv-mark" src="${LOGO}" alt=""><svg class="hv-run" viewBox="0 0 445 340" aria-hidden="true"><path class="r1" pathLength="100" d="M100 262C125 232 160 222 210 207C250 195 290 170 322 134C336 118 346 98 355 78"/><path class="r2" pathLength="100" d="M338 203L298 243L318 268L319 292"/><circle class="hd" cx="355" cy="78" r="16"/></svg></div><span class="hv-full">Administrasi Berbasis Digital</span><b class="hv-sch">SMP NEGERI 1 DONDO</b><span class="hv-desc">Aplikasi administrasi sekolah yang menyatukan Kepala Sekolah, Tata Usaha, Perpustakaan, Guru, dan PEMILOS dalam satu sistem: rapi, cepat, dan mudah dipantau.</span><span class="hv-desc">Untuk <b>murid</b>, Aplikasi ini membuat belajar lebih menyenangkan: materi, tugas, jadwal, nilai, dan rapor bisa dilihat kapan saja, sementara <b>guru</b> mudah memantau perkembangan belajar setiap <b>murid</b>.</span><b class="hv-slogan">✨ Digitalisasi itu keren! ✨</b></div></div><div class="hv-main"><h1>Selamat Datang!</h1><p>Silakan masuk ke akun Anda</p><div class="hv-grid">${HM.map(x=>`<button class="hv-c" style="--c:${x.c}" onclick="modulGo('${x.k}')"><i class="hv-ic">${HI[x.k]}</i><div class="hv-tx"><h3>${x.t}</h3><p>${x.d}</p><span class="hv-go">${x.k=='pemilos'?'Masuk Sebagai Pemilih':'Masuk'}</span></div></button>`).join('')}</div></div></div>`}
+function home(){PLF=0;KPF=0;PKF=0;TUF=0;$('#app').innerHTML=`<div class="hv"><div class="hv-side"><div class="hv-brand"><div class="hv-markw"><img class="hv-mark" src="${LOGO}" alt=""><svg class="hv-run" viewBox="0 0 445 340" aria-hidden="true"><path class="r1" pathLength="100" d="M100 262C125 232 160 222 210 207C250 195 290 170 322 134C336 118 346 98 355 78"/><path class="r2" pathLength="100" d="M338 203L298 243L318 268L319 292"/><circle class="hd" cx="355" cy="78" r="16"/></svg></div><span class="hv-full">Administrasi Berbasis Digital</span><b class="hv-sch">SMP NEGERI 1 DONDO</b><span class="hv-desc">Aplikasi administrasi sekolah yang menyatukan Kepala Sekolah, Tata Usaha, Perpustakaan, Guru, dan PEMILOS dalam satu sistem: rapi, cepat, dan mudah dipantau.</span><span class="hv-desc">Untuk <b>murid</b>, Aplikasi ini membuat belajar lebih menyenangkan: materi, tugas, jadwal, nilai, dan rapor bisa dilihat kapan saja, sementara <b>guru</b> mudah memantau perkembangan belajar setiap <b>murid</b>.</span><b class="hv-slogan">✨ Digitalisasi itu keren! ✨</b></div></div><div class="hv-main"><h1>Selamat Datang!</h1><p>Pilih layanan untuk masuk ke akun Anda</p><div class="hv-grid">${HM.map(x=>`<button class="hv-c" style="--c:${x.c}" onclick="modulGo('${x.k}')"><i class="hv-ic">${HI[x.k]}</i><div class="hv-tx"><h3>${x.t}</h3><p>${x.d}</p><span class="hv-go">${x.k=='pemilos'?'Masuk Sebagai Pemilih':'Masuk'}</span></div></button>`).join('')}</div></div></div>`}
 function modul(k){if(k=='guru')return login();if(k=='pemilos'){if(!SB.url){PLF=1;return login()}return plMasuk()}if(k=='tu'){TUF=1;if(!SB.url)selRole='admin';return login()}if(k=='pustaka'){PKF=1;if(!SB.url)selRole='admin';return login()}if(k=='kepsek'){KPF=1;if(!SB.url)selRole='kepsek';return login()}const x=HM.find(m=>m.k==k);
 $('#app').innerHTML=`<div class="hm"><div class="hp" style="--c:${x.c}">${HI[k]}<h2>${x.t.replace('<br>',' ')}</h2><p class="mu">Modul ini belum dibuat, sehingga datanya masih kosong.</p><p class="mu" style="font-size:12px">${x.d}</p><button class="b" style="margin-top:12px" onclick="home()">← Kembali ke menu utama</button></div></div>`}
 async function logout(){if(window._lo)return;window._lo=1;try{lgOut()}catch(e){}
