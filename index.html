@@ -658,6 +658,31 @@ main{padding:12px 12px 16px}
 @media(max-width:380px){.hv-tx h3{font-size:14px}.hv-tx p{font-size:12px}.hv-ic{width:46px;height:46px}}
 @media(prefers-reduced-motion:reduce){.hv-grid{animation:none}.hv-c{transition:none}}
 }
+
+/* ===== MODE PERBAIKAN (admin dapat menutup aplikasi) ===== */
+.mnt-bn{position:relative;overflow:hidden;width:100%;border-radius:22px;padding:18px 20px 16px 28px;background:#fff;color:#1b2552;box-shadow:0 18px 40px -20px #2a1f8a99;border:1px solid #e3e7f6;display:flex;gap:16px;align-items:center;flex-wrap:wrap;animation:abRise .5s cubic-bezier(.2,.7,.2,1) both}
+.mnt-bn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:11px;background:repeating-linear-gradient(135deg,#facc15 0 10px,#1b2552 10px 20px)}
+.mnt-ic{flex:none;width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,#fde68a,#fb923c);box-shadow:0 6px 18px #fb923c66}
+.mnt-ic i{font-style:normal;display:block;line-height:1;animation:mntSpin 6s linear infinite}
+.mnt-tx{flex:1 1 260px;min-width:0}
+.mnt-tx h2{margin:0 0 4px;font-size:clamp(17px,2vw,22px);line-height:1.25;color:#1b2552}
+.mnt-msg{margin:0;min-height:3em;font-size:14px;line-height:1.5;color:#3f4a7a;transition:opacity .35s,transform .35s}
+.mnt-msg.out{opacity:0;transform:translateY(5px)}
+.mnt-note{margin:8px 0 0;padding:7px 12px;border-radius:12px;background:#fff7ed;border:1px dashed #fb923c;font-size:13px;line-height:1.45;color:#7c2d12;text-align:left}
+.mnt-bar{height:7px;border-radius:99px;margin-top:12px;overflow:hidden;background:#e8ecfa}
+.mnt-bar i{display:block;height:100%;width:42%;border-radius:99px;background:linear-gradient(90deg,#22d3ee,#6366f1,#e879f9);animation:mntSlide 2.2s ease-in-out infinite}
+.mnt-adm{flex:none;align-self:flex-start;border:1px solid #c9d2f5;background:#f4f6ff;color:#3f4a7a;border-radius:999px;padding:5px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+.mnt-adm:hover{background:#e4eaff;color:#1d4ed8}
+.hv-c.lk{filter:grayscale(.9);opacity:.55;cursor:not-allowed}
+.hv-c.lk:hover,.hv-c.lk:focus-visible{transform:none!important;box-shadow:none!important;border-color:#e3e7f6!important}
+.hv-c.lk .hv-go,.hv-c.lk:hover .hv-go{background:#e8ecfa!important;color:#6b7497!important}
+#mntbar{position:fixed;left:50%;transform:translateX(-50%);white-space:nowrap;max-width:calc(100vw - 20px);overflow:hidden;text-overflow:ellipsis;bottom:calc(32px + env(safe-area-inset-bottom,0px));z-index:30;padding:5px 13px;border-radius:99px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(90deg,#dc2626,#f97316);box-shadow:0 4px 14px #dc262660;cursor:pointer;animation:mntBlink 2s ease-in-out infinite}
+.mnt-list{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
+@keyframes mntSpin{to{transform:rotate(360deg)}}
+@keyframes mntSlide{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
+@keyframes mntBlink{50%{opacity:.72}}
+@media(prefers-reduced-motion:reduce){.mnt-ic i,.mnt-bar i,#mntbar{animation:none}}
+@media(max-width:700px){.mnt-bn{padding:14px 14px 14px 22px;gap:12px}.mnt-ic{width:46px;height:46px;font-size:24px;border-radius:14px}}
 </style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&display=swap"><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171a52"><link rel="icon" href="./icon-192.png"><link rel="apple-touch-icon" href="./icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ABD Sekolah">
 </head><body><div id="app"></div><div id="m" onclick="if(event.target==this)cm()"></div><div id="pr"></div><div id="cp"></div><div id="dev">Pengembang : <b>Abd. Pandrik Lesi, S.Pd.,Gr.</b> &nbsp;|&nbsp; Versi 2026.5</div>
 <script>
@@ -856,7 +881,7 @@ if(gone.length){if(gone.length>=15&&gone.length>snap[t].size*0.3&&!(Date.now()-(
 const save=()=>{if(!SB.url){try{localStorage.setItem('lms',JSON.stringify(db))}catch(e){}return}OFF.dirty();clearTimeout(tm);tm=setTimeout(()=>{busy=busy.then(push)},300)};
 function loginSB(msg){$('#app').innerHTML=shell(`${KPF?`<h1>🏫 Login Kepala Sekolah</h1><p class="mu">Masukkan NIP (atau username) dan kata sandi Kepala Sekolah, lalu tekan Masuk.</p>`:PLF?`<h1>🗳️ Login Pemilih</h1><p class="mu">PEMILOS – Pemilihan Ketua &amp; Wakil Ketua OSIS. Masuk dengan akun siswa, guru, kepala sekolah, atau pegawai TU Anda untuk memberikan suara.</p>`:TUF?`<h1>🗂️ Login Administrasi Tata Usaha</h1><p class="mu">Masuk dengan akun admin, petugas TU, atau kepala sekolah.</p>`:`<h1>Selamat Datang</h1><p class="mu">Silakan masuk ke akun Anda</p>`}${msg?`<p class="lerr" role="alert">${esc(msg)}</p>`:''}<label>${KPF?'NIP / Username Kepala Sekolah':'Username / Email'}<input id="em" type="text" autocomplete="username" placeholder="${KPF?'NIP atau username':'NIP guru atau email siswa'}"></label><label>Kata sandi<div class="pwr"><input id="pw" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key=='Enter')doLogin()"><button type="button" class="eye" onclick="togPw(this)" aria-pressed="false" aria-label="Tampilkan kata sandi">${EYE0}</button></div></label><button class="b lbtn" onclick="doLogin()">Masuk</button>`)}
 async function sess(j){TK=j.access_token;RT=j.refresh_token;try{sessionStorage.setItem('rt',RT)}catch(e){}
-const p=(await api('profiles?id=eq.'+j.user.id+'&select=*'))[0];if(!p)throw new Error('Akun belum punya peran. Hubungi admin sekolah.');if(KPF&&p.role!='kepsek')throw new Error('Akun ini bukan akun Kepala Sekolah. Gunakan kartu yang sesuai atau hubungi admin sekolah.');me={role:p.role,id:p.ref_id,nama:p.nama,uid:p.id};await OFF.preSync();await pull();
+const p=(await api('profiles?id=eq.'+j.user.id+'&select=*'))[0];if(!p)throw new Error('Akun belum punya peran. Hubungi admin sekolah.');await mntCek(1);if(MNT.on&&p.role!='admin'){TK=RT=null;try{sessionStorage.removeItem('rt')}catch(e){}throw new Error('Aplikasi sedang dalam perbaikan. '+mntPick()+(MNT.pesan?' Pesan admin: '+MNT.pesan:''))}if(KPF&&p.role!='kepsek')throw new Error('Akun ini bukan akun Kepala Sekolah. Gunakan kartu yang sesuai atau hubungi admin sekolah.');me={role:p.role,id:p.ref_id,nama:p.nama,uid:p.id};await OFF.preSync();await pull();
 if(me.role=='admin'&&Object.values(db).every(a=>!a.length)&&confirm('Database masih kosong. Isi dengan data contoh?')){db=seed();fixDb();Object.keys(COLS).forEach(t=>snap[t]=new Map());await push()}
 badge('✓ Terhubung ke Database');setTimeout(()=>{try{SAFEBK.save('muat').then(w=>{if(w&&w.turun)badge('⚠ Data yang dimuat jauh lebih sedikit dari salinan sebelumnya. Jangan mengubah data dulu; periksa menu Cadangan.',1)});SAFEBK.snap()}catch(e){}},4000);try{pfPing()}catch(e){}pg=(PLF&&['siswa','guru','kepsek'].includes(me.role))?'pemilos':(KPF&&me.role=='kepsek')?'supervisi':PKF?'pkdash':TUF?(tuOk()?'tudash':(TUF=0,alert('Akun ini belum memiliki akses Tata Usaha. Hubungi admin sekolah.'),'dash')):'dash';PLF=0;KPF=0;draw()}
 let WL=0;
@@ -870,7 +895,7 @@ window.addEventListener('error',e=>{console.error('Kesalahan halaman',e.error||e
 window.addEventListener('beforeunload',e=>{if(window._upN>0){e.preventDefault();e.returnValue=''}});
 function loadOff(){clearTimeout(window._ldW);const e=$('#ld');if(e){e.style.display='none';e.innerHTML=''}LD=null}
 function loadRun(t,fn,o={}){if(LD)return;loadOn(t,o.sub,o.c,o.ico);const ms=o.ms||900,t0=Date.now(),st=['Menyiapkan modul…','Memuat tampilan…','Hampir selesai…'],iv=setInterval(()=>{const k=Math.min(1,(Date.now()-t0)/ms);loadSet(100*(1-Math.pow(1-k,2)),st[Math.min(2,Math.floor(k*3))]);if(k>=1){clearInterval(iv);setTimeout(()=>{loadOff();fn()},180)}},40)}
-function modulGo(k){const x=HM.find(m=>m.k==k);loadRun(x.t.replace('<br>',' '),()=>modul(k),{c:x.c,ico:HI[k]})}
+function modulGo0(k){const x=HM.find(m=>m.k==k);loadRun(x.t.replace('<br>',' '),()=>modul(k),{c:x.c,ico:HI[k]})}
 /* ===== Halaman awal: pilihan modul ===== */
 const HI={
 kepsek:'<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 22l4 4 8-12 8 12 4-4-3 12H23z"/><circle cx="32" cy="43" r="6"/><path d="M16 61c0-9 7-13 16-13s16 4 16 13z"/><path d="M29 49l3 6 3-6"/></svg>',
@@ -885,7 +910,7 @@ const HM=[
 {k:'guru',t:'Administrasi<br>Guru dan Murid',d:'Rapor siswa, RPP, silabus, dan manajemen kelas.',c:'#e879f9'},
 {k:'pemilos',t:'PEMILOS',d:'Pemilihan Ketua &amp; Wakil Ketua OSIS secara digital. Masuk sebagai pemilih.',c:'#f43f5e'}];
 let PLF=0,KPF=0,PKF=0,TUF=0;
-function home(){PLF=0;KPF=0;PKF=0;TUF=0;$('#app').innerHTML=`<div class="hv"><div class="hv-side"><div class="hv-brand"><div class="hv-markw"><img class="hv-mark" src="${LOGO}" alt=""><svg class="hv-run" viewBox="0 0 445 340" aria-hidden="true"><path class="r1" pathLength="100" d="M100 262C125 232 160 222 210 207C250 195 290 170 322 134C336 118 346 98 355 78"/><path class="r2" pathLength="100" d="M338 203L298 243L318 268L319 292"/><circle class="hd" cx="355" cy="78" r="16"/></svg></div><span class="hv-full">Administrasi Berbasis Digital</span><b class="hv-sch">SMP NEGERI 1 DONDO</b><span class="hv-desc">Aplikasi administrasi sekolah yang menyatukan Kepala Sekolah, Tata Usaha, Perpustakaan, Guru, dan PEMILOS dalam satu sistem: rapi, cepat, dan mudah dipantau.</span><span class="hv-desc">Untuk <b>murid</b>, Aplikasi ini membuat belajar lebih menyenangkan: materi, tugas, jadwal, nilai, dan rapor bisa dilihat kapan saja, sementara <b>guru</b> mudah memantau perkembangan belajar setiap <b>murid</b>.</span><b class="hv-slogan">✨ Digitalisasi itu keren! ✨</b></div></div><div class="hv-main"><h1>Selamat Datang!</h1><p>Pilih layanan untuk masuk ke akun Anda</p><div class="hv-grid">${HM.map(x=>`<button class="hv-c" style="--c:${x.c}" onclick="modulGo('${x.k}')"><i class="hv-ic">${HI[x.k]}</i><div class="hv-tx"><h3>${x.t}</h3><p>${x.d}</p><span class="hv-go">${x.k=='pemilos'?'Masuk Sebagai Pemilih':'Masuk'}</span></div></button>`).join('')}</div></div></div>`}
+function home(){PLF=0;KPF=0;PKF=0;TUF=0;$('#app').innerHTML=`<div class="hv"><div class="hv-side"><div class="hv-brand"><div class="hv-markw"><img class="hv-mark" src="${LOGO}" alt=""><svg class="hv-run" viewBox="0 0 445 340" aria-hidden="true"><path class="r1" pathLength="100" d="M100 262C125 232 160 222 210 207C250 195 290 170 322 134C336 118 346 98 355 78"/><path class="r2" pathLength="100" d="M338 203L298 243L318 268L319 292"/><circle class="hd" cx="355" cy="78" r="16"/></svg></div><span class="hv-full">Administrasi Berbasis Digital</span><b class="hv-sch">SMP NEGERI 1 DONDO</b><span class="hv-desc">Aplikasi administrasi sekolah yang menyatukan Kepala Sekolah, Tata Usaha, Perpustakaan, Guru, dan PEMILOS dalam satu sistem: rapi, cepat, dan mudah dipantau.</span><span class="hv-desc">Untuk <b>murid</b>, Aplikasi ini membuat belajar lebih menyenangkan: materi, tugas, jadwal, nilai, dan rapor bisa dilihat kapan saja, sementara <b>guru</b> mudah memantau perkembangan belajar setiap <b>murid</b>.</span><b class="hv-slogan">✨ Digitalisasi itu keren! ✨</b></div></div><div class="hv-main"><h1>Selamat Datang!</h1><p>Pilih layanan untuk masuk ke akun Anda</p><div class="hv-grid">${HM.map(x=>`<button class="hv-c" style="--c:${x.c}" onclick="modulGo('${x.k}')"><i class="hv-ic">${HI[x.k]}</i><div class="hv-tx"><h3>${x.t}</h3><p>${x.d}</p><span class="hv-go">${x.k=='pemilos'?'Masuk Sebagai Pemilih':'Masuk'}</span></div></button>`).join('')}</div></div></div>`;try{mntApply()}catch(e){console.warn(e)}}
 function modul(k){if(k=='guru')return login();if(k=='pemilos'){if(!SB.url){PLF=1;return login()}return plMasuk()}if(k=='tu'){TUF=1;if(!SB.url)selRole='admin';return login()}if(k=='pustaka'){PKF=1;if(!SB.url)selRole='admin';return login()}if(k=='kepsek'){KPF=1;if(!SB.url)selRole='kepsek';return login()}const x=HM.find(m=>m.k==k);
 $('#app').innerHTML=`<div class="hm"><div class="hp" style="--c:${x.c}">${HI[k]}<h2>${x.t.replace('<br>',' ')}</h2><p class="mu">Modul ini belum dibuat, sehingga datanya masih kosong.</p><p class="mu" style="font-size:12px">${x.d}</p><button class="b" style="margin-top:12px" onclick="home()">← Kembali ke menu utama</button></div></div>`}
 async function logout(){if(window._lo)return;window._lo=1;try{lgOut()}catch(e){}
@@ -1059,7 +1084,7 @@ const EYE0='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 function togPw(b){const i=document.getElementById('pw');if(!i)return;const h=i.type=='password';i.type=h?'text':'password';b.setAttribute('aria-pressed',h?'true':'false');b.setAttribute('aria-label',h?'Sembunyikan kata sandi':'Tampilkan kata sandi');b.innerHTML=h?EYE1:EYE0}
 const shell=h=>`<div class="lg"><div class="lgl"><div class="lgl-in"><div class="brand">${logo(210)}</div><h2 class="lgh">Administrasi sekolah dalam satu aplikasi</h2><p class="lgs">Pembelajaran, penilaian, dan komunikasi sekolah tersimpan rapi dan dapat diakses sesuai peran masing-masing.</p><div class="lgf">${FEAT.map(f=>`<div class="fc" style="--c:${f[3]}"><i>${f[0]}</i><div><b>${f[1]}</b><span>${f[2]}</span></div></div>`).join('')}</div></div></div><div class="lgr"><div class="lgm">${logo(150)}<p>Administrasi sekolah dalam satu aplikasi</p></div><div class="lc">${h}<p class="lgb"><a href="#" onclick="home();return false">← Kembali ke menu utama</a></p></div></div></div>`;
 const COL=['#34d399','#60a5fa','#a78bfa','#facc15','#fb923c','#22d3ee','#f472b6'],IC={dash:'📊',master:'🗂️',akun:'👤',jadwal:'🗓️',materi:'📚',tugas:'📝',absen:'✅',nilai:'💯',game:'🎮',chat:'💬',info:'📢',kal:'📅',profil:'🏛️',lap:'📈',kelas:'🏫',backup:'💾',jurnal:'📓',peran:'🧑‍🏫',pemilos:'🗳️',pilketos:'🗳️',doksek:'🏫',dokkepsek:'🔐'};
-const MENU={admin:[['dash','Beranda'],['profilku','Profil Saya'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['profil','Profil Sekolah'],['master','Data Master'],['akun','Akun'],['pengguna','Pengguna Aktif'],['peran','Peran Guru'],['pilketos','PILKETOS'],['jadwal','Jadwal'],['info','Pengumuman'],['kal','Kalender'],['lap','Laporan'],['backup','Backup & Restore']],
+const MENU={admin:[['dash','Beranda'],['profilku','Profil Saya'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['profil','Profil Sekolah'],['master','Data Master'],['akun','Akun'],['pengguna','Pengguna Aktif'],['peran','Peran Guru'],['perbaikan','Mode Perbaikan'],['pilketos','PILKETOS'],['jadwal','Jadwal'],['info','Pengumuman'],['kal','Kalender'],['lap','Laporan'],['backup','Backup & Restore']],
 kepsek:[['dash','Beranda'],['profilku','Profil Saya'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['doksek','Dokumen Sekolah'],['dokkepsek','Dokumen Kepala Sekolah'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pksaya','Pinjaman Saya'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tulap','Laporan TU'],['tukop','Kop Surat'],['supervisi','Dokumen Supervisi Guru'],['pantauperangkat','Perangkat Pembelajaran'],['pantauwk','Wali Kelas'],['pantaugw','Guru Wali'],['lap','Laporan'],['jadwal','Jadwal'],['absen','Absensi'],['jurnal','Jurnal Pembelajaran'],['materi','Materi'],['game','Game Pembelajaran'],['tugas','Tugas'],['nilai','Daftar Nilai'],['chat','Chat'],['info','Pengumuman'],['kal','Kalender'],['pemilos','PEMILOS']],
 guru:[['dash','Beranda'],['profilku','Profil Saya'],['doksek','Dokumen Sekolah'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pksaya','Pinjaman Saya'],['kelas','Kelas & Siswa'],['walikelas','Wali Kelas'],['guruwali','Guru Wali'],['jadwal','Jadwal'],['materi','Materi'],['tugas','Tugas'],['absen','Absensi'],['jurnal','Jurnal Pembelajaran'],['perangkat','Perangkat Pembelajaran'],['dokguru','Dokumen Supervisi'],['nilai','Daftar Nilai'],['game','Game Pembelajaran'],['chat','Chat'],['info','Pengumuman'],['kal','Kalender'],['lap','Laporan'],['backup','Cadangan'],['pemilos','PEMILOS'],['pilketos','PILKETOS']],
 siswa:[['dash','Beranda'],['profilku','Profil Saya'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pksaya','Pinjaman Saya'],['pemilos','PEMILOS'],['jadwal','Jadwal'],['materi','Materi'],['tugas','Tugas'],['absen','Absensi'],['game','Game Pembelajaran'],['chat','Chat'],['info','Pengumuman'],['kal','Kalender']]};
@@ -1234,7 +1259,7 @@ const CIC={'Supervisi':()=>ICS.supervisi(),'PEMILOS':()=>ICS.pemilos(),'Pengatur
 'Pembelajaran':()=>ICS.materi(),'Komunikasi':()=>ICS.chat(),'Laporan & Data':()=>ICS.lap(),'Administrasi':()=>ICS.dokpend(),'Perpustakaan':()=>`<svg viewBox="0 0 24 24"><path d="M4 4h6a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2H4z" fill="#34d399"/><path d="M20 4h-6a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2H20z" fill="#6ee7b7"/></svg>`};
 const ico=(k,on)=>k=='dash'?ICS.dash(on?'#fff':'#3b9bff'):ICS[k]?ICS[k]():(IC[k]||'•');
 const BRAND=LOGOFX(`<img src="${LOGO}" alt="ABD - Administrasi Berbasis Digital" style="width:150px;max-width:100%;height:auto;display:block">`);
-const CATS=[['',['dash']],['',['pantauwk']],['',['pantaugw']],['Supervisi',['supervisi','pantauperangkat']],['Akademik',['kelas','walikelas','guruwali','jadwal','kal']],['Pembelajaran',['absen','jurnal','materi','tugas','nilai','game','perangkat','dokguru']],['Administrasi',['doksek']],['Komunikasi',['chat','info']],['PEMILOS',['pemilos','pilketos']],['Tata Usaha',['tudash','tusm','tusk','tucetak','tuarsip','tusiswa','tupegawai','tulap','tukop']],['Perpustakaan',['pkdash','pkbuku','pkpinjam','pkanggota','pkdok','pksaya','pklap']],['Laporan & Data',['lap','backup']],['Pengaturan',['profilku','profil','master','akun','pengguna','peran']]];
+const CATS=[['',['dash']],['',['pantauwk']],['',['pantaugw']],['Supervisi',['supervisi','pantauperangkat']],['Akademik',['kelas','walikelas','guruwali','jadwal','kal']],['Pembelajaran',['absen','jurnal','materi','tugas','nilai','game','perangkat','dokguru']],['Administrasi',['doksek']],['Komunikasi',['chat','info']],['PEMILOS',['pemilos','pilketos']],['Tata Usaha',['tudash','tusm','tusk','tucetak','tuarsip','tusiswa','tupegawai','tulap','tukop']],['Perpustakaan',['pkdash','pkbuku','pkpinjam','pkanggota','pkdok','pksaya','pklap']],['Laporan & Data',['lap','backup']],['Pengaturan',['profilku','profil','master','akun','pengguna','peran','perbaikan']]];
 const CATS_KS=[['',['dash']],['Akademik',['kelas','walikelas','guruwali','jadwal','kal']],['Administrasi',['doksek','dokkepsek']],['Supervisi',['supervisi','pantauperangkat']],['Pembelajaran',['absen','jurnal','materi','tugas','nilai','game','perangkat','dokguru']],['',['pantauwk']],['',['pantaugw']],['Komunikasi',['chat','info']],['PEMILOS',['pemilos']],['Laporan & Data',['lap','backup']],['Pengaturan',['profilku','profil','master','akun','pengguna','peran']],['Tata Usaha',['tudash','tusm','tusk','tucetak','tuarsip','tusiswa','tupegawai','tulap','tukop']],['Perpustakaan',['pkdash','pkbuku','pkpinjam','pkanggota','pkdok','pksaya','pklap']]];
 function CT(){return me&&me.role=='kepsek'?CATS_KS:CATS}
 function navHTML(){pfApply();const M=MENU[me.role].filter(menuOk);return CT().map(([c,ks],i)=>{const it=ks.map(k=>M.find(m=>m[0]==k)).filter(Boolean);if(!it.length)return'';
@@ -2788,6 +2813,102 @@ return`<div class="tw"><table><tr><th rowspan="2">No</th><th rowspan="2">Nama Si
 function dnSiswa(){const sw=db.siswa.find(x=>x.id==me.id);if(!sw)return'<div class="card">Data siswa tidak ditemukan.</div>';const ms=[...new Set(db.jadwal.filter(j=>j.kelas==sw.kelas&&j.tahun==TH).map(j=>j.mapel))],sem=DN.sem;return`<div class="card"><div class="row np"><span class="tag">Semester ${sem} (${esc((db.tahun.find(x=>x.id==TH)||{}).sem||'Ganjil')}) · ${esc(nm('tahun',TH))}</span></div><p class="mu">Nilai Akhir = (rata-rata Formatif &amp; Sumatif Lingkup Materi × 50%) + (STS × 20%) + (SAS × 30%).</p>${tbl(['Mata Pelajaran','Rata² Formatif','Rata² Sumatif LM','STS','SAS','Nilai Akhir'],ms.map(m=>{const h=dnCalc(sw.id,sw.kelas,m,sem);return[esc(nm('mapel',m)),h.af!=null?dnR(h.af):'-',h.as!=null?dnR(h.as):'-',h.sts??'-',h.sas??'-',`<b style="${h.na!=null&&h.na<kkmOf(sw.kelas,m)?'color:var(--er)':''}">${h.na??'-'}</b>`]}))}</div>`}
 function dnPrint(){const[k,m]=DN.k.split('|');printDoc('DAFTAR NILAI '+nm('mapel',m).toUpperCase(),esc(nm('kelas',k))+' · Semester '+DN.sem+' · '+esc(nm('tahun',TH)),dnTable(k,m,DN.sem,1,1),'')}
 function dnPage(){if(me.role=='siswa')return dnSiswa();const L=dnList();if(!L.length)return'<div class="card">Belum ada kelas dan mapel. '+(me.role=='guru'?'Pilih dulu di menu Kelas &amp; Siswa.':'Tambahkan jadwal lebih dulu.')+'</div>';if(!L.includes(DN.k))DN.k=L[0];const[k,m]=DN.k.split('|'),ro=me.role!='guru';return`<div class="card"><div class="row np"><label>Kelas &amp; mata pelajaran<select onchange="DN.k=this.value;draw()">${opt(L.map(x=>{const[a,c]=x.split('|');return[x,nm('kelas',a)+' · '+nm('mapel',c)]}),DN.k)}</select></label><span class="tag">Semester ${DN.sem} (${esc((db.tahun.find(x=>x.id==TH)||{}).sem||'Ganjil')}) · ${esc(nm('tahun',TH))}</span></div>${kkmBox(k,m,ro)}<p class="mu">Nilai Akhir = ((rata-rata Asesmen Formatif + rata-rata Sumatif Lingkup Materi) ÷ 2 × 50%) + (Sumatif Tengah Semester × 20%) + (Sumatif Akhir Semester × 30%). Nilai Akhir muncul setelah STS dan SAS terisi.</p><p class="mu" style="font-size:12px">Kolom <b>Tugas &amp; Kuis (otomatis)</b> diambil dari menu Tugas (total nilai ÷ jumlah tugas termasuk kuis) dan ikut dihitung dalam Rata² Asesmen Formatif. Tugas yang judulnya memuat kata <i>ulangan</i> atau <i>sumatif</i> otomatis masuk ke kolom <b>Ulangan/Sumatif (otomatis)</b> pada Sumatif Lingkup Materi. Semester mengikuti semester pada tahun ajaran aktif di aplikasi (Ganjil = Semester 1, Genap = Semester 2); semua tugas pada tahun ajaran itu dihitung di semester tersebut.</p><div class="row np">${ro?'':'<button class="b" onclick="dnAdd(\'F\')">+ Kolom Formatif</button><button class="b" onclick="dnAdd(\'S\')">+ Kolom Sumatif Lingkup Materi</button>'}<button class="b g" onclick="dnPrint()">🖨 Cetak</button></div>${dnTable(k,m,DN.sem,ro,0)}</div>`}
+
+/* ===== MODE PERBAIKAN: admin menutup aplikasi, kartu login terkunci untuk semua pengguna ===== */
+const MNT_MSG=[
+'Sedang kami servis dulu, biar makin ngebut! 🚀',
+'Tukang digital kami lagi pasang baut dan kabel. Sabar ya, hasilnya bakal kece! 🔧',
+'Aplikasi lagi ganti baju baru. Jangan ngintip, nanti hilang kejutannya! 👗✨',
+'Server lagi minum kopi dulu ☕ Sebentar lagi segar kembali.',
+'Ada upgrade seru yang sedang dimasak. Aromanya sudah mulai tercium! 🍳',
+'Papan tulis digital sedang dilap sampai mengilap. ✨',
+'Digitalisasi itu keren, dan perawatannya juga harus keren! 💪',
+'Admin sedang bertapa di balik layar demi aplikasi yang lebih sakti. 🧘',
+'Bel istirahat berbunyi untuk aplikasi. Sebentar lagi masuk kelas lagi! 🔔',
+'Bukan hilang, hanya istirahat sebentar untuk kembali lebih kuat! 🦸',
+'Robot-robot kecil sedang menambal bug. Tenang, tidak ada serangga yang disakiti. 🐛🤖',
+'Sambil menunggu: minum air putih, regangkan badan, tarik napas dalam-dalam. 💧',
+'Lemari arsip digital sedang dirapikan. Sebentar lagi semua kembali tertata! 🗄️',
+'Loading-nya kali ini giliran kami, bukan kamu! ⏳',
+'Mesin sedang dipanaskan. Tiga, dua, satu… hampir lepas landas! 🛫'];
+let MNT={on:false,pesan:'',ok:null,ts:0,pr:null},_mntI=-1;
+function mntPick(){let i;do{i=Math.floor(Math.random()*MNT_MSG.length)}while(i===_mntI&&MNT_MSG.length>1);_mntI=i;return MNT_MSG[i]}
+/* baca status dari database (fungsi publik, boleh dibaca sebelum login). Bila fungsi belum dipasang atau jaringan gagal, aplikasi tetap terbuka */
+function mntCek(force){
+ if(!SB.url)return Promise.resolve(false);
+ if(!force&&Date.now()-MNT.ts<8000)return Promise.resolve(MNT.on);
+ if(MNT.pr)return MNT.pr;
+ MNT.pr=(async()=>{
+  try{
+   const c=new AbortController(),t=setTimeout(()=>c.abort(),4500);let r;
+   try{r=await fetch(SB.url+'/rest/v1/rpc/app_status_get',{method:'POST',signal:c.signal,headers:{apikey:SB.key,Authorization:'Bearer '+SB.key,'Content-Type':'application/json'},body:'{}'})}finally{clearTimeout(t)}
+   if(!r.ok){MNT.ok=false;MNT.on=false}
+   else{const tx=await r.text(),j=(tx?JSON.parse(tx):null)||{};MNT.ok=true;MNT.on=!!j.perbaikan;MNT.pesan=String(j.pesan||'')}
+  }catch(e){if(MNT.ok==null)MNT.on=false}
+  MNT.ts=Date.now();MNT.pr=null;return MNT.on})();
+ return MNT.pr}
+/* klik kartu di beranda: cek status terbaru dulu */
+function modulGo(k){if(!SB.url)return modulGo0(k);mntCek().then(on=>on?mntTolak():modulGo0(k))}
+function mntTolak(){md(`<div style="text-align:center"><div style="font-size:48px;line-height:1.1">🛠️</div><h3 style="font-size:19px;margin:6px 0">Aplikasi Sedang Dalam Perbaikan</h3><p style="margin:0 0 8px">${esc(mntPick())}</p>${MNT.pesan?`<p class="mnt-note">📣 Pesan dari admin: ${esc(MNT.pesan)}</p>`:''}<p class="mu" style="font-size:12.5px;margin:10px 0">Silakan coba lagi beberapa saat lagi. Terima kasih atas kesabarannya 🙏</p><button class="b" onclick="cm()">Oke, saya tunggu</button></div>`)}
+/* tampilan beranda: kunci kartu + banner pesan berputar */
+function mntRender(){
+ const g=$('.hv-grid');if(!g)return;let bn=$('#mntbn');
+ if(!MNT.on){if(bn)bn.remove();clearInterval(window._mntRot);g.querySelectorAll('.hv-c').forEach(b=>{b.classList.remove('lk');b.removeAttribute('aria-disabled');const o=b.querySelector('.hv-go');if(o&&o.dataset.go){o.textContent=o.dataset.go}});return}
+ g.querySelectorAll('.hv-c').forEach(b=>{b.classList.add('lk');b.setAttribute('aria-disabled','true');const o=b.querySelector('.hv-go');if(o){if(!o.dataset.go)o.dataset.go=o.textContent;o.textContent='🔒 Ditutup sementara'}});
+ if(!bn){bn=document.createElement('div');bn.id='mntbn';bn.className='mnt-bn';bn.setAttribute('role','status');
+  bn.innerHTML=`<div class="mnt-ic"><i>⚙️</i></div><div class="mnt-tx"><h2>Aplikasi Sedang Dalam Perbaikan</h2><p class="mnt-msg" id="mntmsg" aria-live="polite"></p><div id="mntnote"></div><div class="mnt-bar"><i></i></div></div><button class="mnt-adm" type="button" onclick="mntAdminLogin()">🔐 Akses Admin</button>`;
+  g.parentNode.insertBefore(bn,g)}
+ const n=$('#mntnote');if(n)n.innerHTML=MNT.pesan?`<p class="mnt-note">📣 Pesan dari admin: ${esc(MNT.pesan)}</p>`:'';
+ const m=$('#mntmsg');if(m&&!m.textContent)m.textContent=mntPick();
+ clearInterval(window._mntRot);
+ window._mntRot=setInterval(()=>{const e=$('#mntmsg');if(!e){clearInterval(window._mntRot);return}e.classList.add('out');setTimeout(()=>{e.textContent=mntPick();e.classList.remove('out')},350)},6000)}
+function mntApply(){
+ mntBar();if(!SB.url)return;
+ mntCek(1).then(mntRender);
+ clearInterval(window._mntPoll);
+ window._mntPoll=setInterval(()=>{if(!$('.hv')){clearInterval(window._mntPoll);return}mntCek(1).then(mntRender)},30000)}
+/* admin tetap bisa masuk saat aplikasi ditutup */
+function mntAdminLogin(){PLF=KPF=PKF=TUF=0;loginSB('Mode perbaikan aktif. Hanya akun Admin yang dapat masuk.')}
+/* penanda untuk admin selama aplikasi ditutup */
+function mntBar(){let b=$('#mntbar');const show=MNT.on&&me&&me.role=='admin';if(!show){if(b)b.remove();return}if(!b){b=document.createElement('div');b.id='mntbar';b.title='Buka pengaturan Mode Perbaikan';b.onclick=()=>go('perbaikan');document.body.appendChild(b)}b.textContent='🛠 Mode perbaikan AKTIF · klik untuk kelola'}
+/* pengguna yang sedang masuk mendapat peringatan lembut (tidak dipaksa keluar) */
+function mntWatch(){
+ if(window._mntW||!SB.url)return;
+ window._mntW=setInterval(async()=>{
+  if(!me||!TK||me.role=='admin')return;
+  await mntCek(1);
+  if(!MNT.on){window._mntWarned=0;return}
+  if(window._mntWarned||!me)return;window._mntWarned=1;
+  md(`<div style="text-align:center"><div style="font-size:46px;line-height:1.1">🛠️</div><h3 style="font-size:19px;margin:6px 0">Aplikasi Akan Segera Diperbaiki</h3><p style="margin:0 0 8px">${esc(mntPick())}</p>${MNT.pesan?`<p class="mnt-note">📣 Pesan dari admin: ${esc(MNT.pesan)}</p>`:''}<p class="mu" style="font-size:12.5px;margin:10px 0">Selesaikan pekerjaan Anda lalu keluar. Setelah keluar, aplikasi tidak bisa dimasuki sampai perbaikan selesai.</p><div class="row" style="justify-content:center"><button class="b g" onclick="cm()">Nanti dulu</button><button class="b" onclick="cm();logout()">Simpan &amp; Keluar</button></div></div>`)},45000)}
+const _draw0=draw;draw=function(){const r=_draw0.apply(this,arguments);try{mntBar();mntWatch()}catch(e){}return r};
+/* halaman admin: Mode Perbaikan */
+ICS.perbaikan=()=>`<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`;
+SUBT.perbaikan='Tutup aplikasi sementara: kartu login terkunci untuk semua pengguna, hanya admin yang tetap bisa masuk';
+function mntPage(){
+ if(!me||me.role!='admin')return'<div class="card">Halaman ini hanya untuk Admin.</div>';
+ const on=MNT.on,before=MNT.on+'|'+MNT.pesan;
+ if(Date.now()-MNT.ts>5000)setTimeout(()=>mntCek(1).then(()=>{if(pg=='perbaikan'&&MNT.on+'|'+MNT.pesan!=before)draw()}),0);
+ return`<div class="card" style="border-color:${on?'var(--er)':'var(--ok)'}"><div class="row" style="align-items:center;justify-content:space-between;flex-wrap:wrap"><div style="flex:1 1 280px"><h3>🛠️ Mode Perbaikan Aplikasi</h3><p class="mu" style="margin:0">Saat aktif, semua kartu login di halaman awal terkunci dan menampilkan pesan <b>“Aplikasi sedang dalam perbaikan”</b>. Admin tetap bisa masuk lewat tombol <b>Akses Admin</b>.</p></div><span class="tag ${on?'er':'ok'}" style="flex:0 0 auto;font-size:14px;padding:5px 16px">${on?'🔴 SEDANG DITUTUP':'🟢 TERBUKA'}</span></div>
+${MNT.ok===false?`<div class="card" style="border-color:var(--er);margin:12px 0 0"><b style="color:var(--er)">⚠ Fitur ini belum terpasang di database</b><p class="mu" style="margin:4px 0 0">Buka Supabase &gt; SQL Editor, lalu jalankan file <code>supabase_perbaikan.sql</code> satu kali. Setelah itu muat ulang halaman ini.</p></div>`:''}
+<label style="margin-top:14px">Pesan tambahan dari admin (opsional, tampil di bawah pesan kreatif)<textarea id="mnt_ps" maxlength="240" placeholder="Contoh: Perbaikan diperkirakan selesai pukul 15.00 WITA.">${esc(MNT.pesan)}</textarea></label>
+<div class="row np">${on?`<button class="b" onclick="mntToggle(0)">✅ Buka Kembali Aplikasi</button><button class="b g" onclick="mntToggle(1,1)">💾 Perbarui Pesan</button>`:`<button class="b" style="background:linear-gradient(90deg,#dc2626,#f97316);color:#fff" onclick="mntToggle(1)">🔒 Tutup Aplikasi (Sedang Dalam Perbaikan)</button>`}<button class="b g" onclick="mntTolak()">👁 Pratinjau Pesan</button><button class="b g" onclick="mntCek(1).then(()=>draw())">↻ Segarkan</button></div></div>
+<div class="card"><h3>💬 Pesan kreatif yang ditampilkan bergantian</h3><p class="mu" style="margin:0">Pengguna melihat salah satu pesan ini secara acak, berganti setiap beberapa detik.</p><ul class="mnt-list">${MNT_MSG.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`}
+async function mntToggle(on,keep){
+ if(!me||me.role!='admin')return;
+ const ps=(($('#mnt_ps')||{}).value||'').trim().slice(0,240);
+ if(on&&!keep&&!confirm('Tutup aplikasi untuk semua pengguna selain Admin?\n\nSemua kartu login akan terkunci dan pengguna yang sedang masuk akan diminta keluar. Anda bisa membukanya kembali kapan saja dari menu Mode Perbaikan.'))return;
+ try{
+  badge('⏳ Mengubah status aplikasi…');
+  const j=await api('rpc/app_status_set',{method:'POST',body:JSON.stringify({p_perbaikan:!!on,p_pesan:ps})});
+  MNT.ok=true;MNT.on=!!(j&&j.perbaikan);MNT.pesan=String((j&&j.pesan)||'');MNT.ts=Date.now();
+  badge(MNT.on?'🔒 Aplikasi ditutup (mode perbaikan)':'✅ Aplikasi dibuka kembali');
+  mntBar();draw()
+ }catch(e){
+  const m=String(e&&e.message||e);
+  if(/404|PGRST202|app_status_set/i.test(m)&&!/Hanya admin/i.test(m)){MNT.ok=false;alert('Fitur perbaikan belum terpasang di database.\n\nBuka Supabase > SQL Editor, lalu jalankan file supabase_perbaikan.sql satu kali.');draw()}
+  else alert('Gagal mengubah status aplikasi: '+m.slice(0,160));
+  badge('⚠ Gagal mengubah status aplikasi',1)}}
+P.perbaikan=mntPage;
 P.nilai=dnPage;boot();
 
 /* ===== Dashboard Perpustakaan Digital (kartu Perpustakaan) ===== */
@@ -3574,6 +3695,92 @@ const url=URL.createObjectURL(new Blob([x],{type:'image/svg+xml;charset=utf-8'})
 img.onload=()=>{try{const S=2,cv=document.createElement('canvas');cv.width=1024*S;cv.height=1024*S;const g=cv.getContext('2d');g.fillStyle='#050b2a';g.fillRect(0,0,cv.width,cv.height);g.drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
 cv.toBlob(b=>{if(!b)return alert('Gagal membuat gambar.');const a=document.createElement('a'),d=new Date(),pad=n=>String(n).padStart(2,'0');a.href=URL.createObjectURL(b);a.download='Hasil-Pilketos-'+d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'.png';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)},'image/png')}catch(e){alert('Gagal mengunduh poster: '+e.message)}};
 img.onerror=()=>{URL.revokeObjectURL(url);alert('Gagal memuat poster untuk diunduh.')};img.src=url}catch(e){alert('Gagal mengunduh poster: '+e.message)}}
+</script>
+<script>
+/* ===== v23: TANDAI + HAPUS TERPILIH + HAPUS SEMUA PADA SEMUA DAFTAR DATA DAN TEMPAT SAMPAH ===== */
+(function(){
+const SEL={},GR={};let gid=0,busy=false,tm=0;
+const st=document.createElement('style');st.textContent='.bkbar{background:var(--bg);border:1px dashed var(--bd);border-radius:10px;padding:6px 10px;margin:6px 0;align-items:center}.bkx{white-space:nowrap;width:1%}.bkx input{width:auto;margin:0}@media print{.bkx,.bkbar{display:none!important}}';document.head.appendChild(st);
+const NOUN={jadwal:'jadwal',info:'pengumuman',kal:'agenda',jurnal:'jurnal',nilai:'nilai',materi:'materi',tugas:'tugas (beserta pengumpulannya)',game:'game',kelas:'kelas (beserta siswa dan data terkait)',mapel:'mata pelajaran (beserta data terkait)',tahun:'tahun ajaran (beserta data terkait)',absen:'catatan absensi'};
+const BIG={kelas:1,mapel:1,tahun:1};
+const SS=ids=>new Set(ids.map(String));
+const nilaiDel=ids=>{const S=SS(ids);db.nilai=db.nilai.filter(x=>!S.has(String(x.id)))};
+const simple=(fn,noun)=>({rx:new RegExp('^'+fn+"\\('([^']+)'\\)"),k:()=>fn,id:m=>m[1],n:()=>noun,rm:nilaiDel});
+const AD=[
+{rx:/(?:^|[^\w$.])del\('([a-z_]+)','([^']+)'\)/,skip:m=>/^(siswa|guru|chat)$/.test(m[1]),k:m=>'del:'+m[1],id:m=>m[2],n:m=>NOUN[m[1]]||'data',big:m=>!!BIG[m[1]],rm:(ids,m)=>ids.forEach(i=>casc(m[1],i))},
+{rx:/^svDel\('([^']+)'\)/,k:()=>'svDel',id:m=>m[1],n:()=>'berkas dokumen',rm:ids=>{const S=SS(ids);db.supervisi=db.supervisi.filter(x=>!S.has(String(x.id)))}},
+{rx:/^lbDel\('([^']+)'\)/,k:()=>'lbDel',id:m=>m[1],n:()=>'data',rm:nilaiDel},
+{rx:/^tuDel\('([^']+)','([^']*)'\)/,k:m=>'tuDel:'+m[2],id:m=>m[1],n:m=>m[2]||'data',rm:nilaiDel},
+simple('egTpD','TP'),simple('wkCatDel','catatan'),simple('gwCatDel','catatan'),simple('egRoleDel','penugasan'),
+{rx:/^egPjDel\('([^']+)'\)/,k:()=>'egPjDel',id:m=>m[1],n:()=>'projek (beserta penilaiannya)',rm:ids=>{const S=SS(ids);db.nilai=db.nilai.filter(x=>!S.has(String(x.id))&&!(x.jenis=='eg_pn'&&S.has(String(x.mapel))))}},
+{rx:/^erTpDel\('([^']+)'\)/,k:()=>'erTpDel',id:m=>m[1],n:()=>'TP (beserta nilainya)',rm:ids=>{const S=SS(ids),T=db.nilai.filter(y=>S.has(String(y.id))).map(x=>({m:x.mapel,c:String(x.ket||'').split('|')[0]}));db.nilai=db.nilai.filter(y=>!S.has(String(y.id))&&!(y.jenis=='er_nt'&&y.tahun==TH&&T.some(t=>t.m==y.mapel&&t.c==y.ket)))}},
+{rx:/^pkBukuDel\('([^']+)'\)/,k:()=>'pkBukuDel',id:m=>m[1],n:()=>'buku',rm:ids=>{const ok=ids.filter(i=>!pkOut(i)),S=SS(ok),no=ids.length-ok.length;db.pk_buku=db.pk_buku.filter(x=>!S.has(String(x.id)));db.pk_pinjam=db.pk_pinjam.filter(p=>!S.has(String(p.buku)));return no?no+' buku tidak dihapus karena masih dipinjam.':''}}
+];
+const QS='[onclick*="del("],[onclick*="Del("],[onclick*="TpD("]';
+function parse(b){const s=b.getAttribute('onclick')||'';for(const a of AD){const m=a.rx.exec(s);if(m)return a.skip&&a.skip(m)?null:{a,m,k:a.k(m),id:String(a.id(m))}}return null}
+function box(g,id,k){return`<input type="checkbox" class="bkc" data-g="${g}" data-id="${id}" ${SEL[k]&&SEL[k].has(id)?'checked':''} title="Tandai">`}
+function refresh(g){const G=GR[g];if(!G)return;const S=SEL[G.k]||(SEL[G.k]=new Set()),n=G.items.filter(i=>S.has(i.id)).length,bar=G.bar;if(!bar)return;const nn=bar.querySelector('.bkn');if(nn)nn.textContent=n;const d=bar.querySelector('[data-bkact=sel]');if(d)d.disabled=!n;const a=bar.querySelector('.bkall');if(a){a.checked=n>0&&n==G.items.length;a.indeterminate=n>0&&n<G.items.length}}
+function scan(){
+for(const g in GR)if(!GR[g].cont.isConnected)delete GR[g];
+const found=new Map();
+document.querySelectorAll(QS).forEach(b=>{if(b.tagName!='BUTTON'&&b.tagName!='A')return;if(b.closest('.bkbar'))return;const p=parse(b);if(!p)return;
+let el=b.closest('tr'),kind='tr',cont=el&&el.closest('table');
+if(!cont){el=b.closest('.mc,.gmc');kind='card';cont=el&&el.parentElement;if(!el){el=b.closest('p');kind='p';cont=el&&el.parentElement}}
+if(!el||!cont||el.dataset.bk||(kind=='tr'&&cont.dataset.bkdone))return;
+let G=found.get(cont);if(!G){G={cont,kind,k:p.k,a:p.a,m:p.m,items:[]};found.set(cont,G)}
+if(G.k!=p.k||G.items.some(i=>i.el===el))return;
+G.items.push({el,id:p.id})});
+found.forEach(G=>{
+if(G.items.length<2)return;
+if(G.kind=='tr'){if(G.cont.querySelector('input[type=checkbox]'))return}else if(G.items.some(i=>i.el.querySelector('input[type=checkbox]')))return;
+const g='g'+(++gid),k=G.k;G.id=g;GR[g]=G;
+if(G.kind=='tr'){const I=new Map(G.items.map(i=>[i.el,i]));[...G.cont.rows].forEach(tr=>{if(tr.closest('table')!==G.cont||tr.querySelector('[colspan]'))return;const it=I.get(tr);let c;if(it){c=tr.insertCell(0);c.className='np bkx';c.innerHTML=box(g,it.id,k);tr.dataset.bk=g}else if(tr.querySelector('th')){c=document.createElement('th');c.className='np bkx';tr.insertBefore(c,tr.firstChild)}else{c=tr.insertCell(0);c.className='np bkx'}});G.cont.dataset.bkdone=g}
+else G.items.forEach(it=>{const w=document.createElement(G.kind=='p'?'span':'div');w.className='np bkx';w.style.cssText=G.kind=='p'?'margin-right:6px;display:inline-block':'margin-bottom:4px;display:block';w.setAttribute('onclick','event.stopPropagation()');w.innerHTML='<label style="display:inline-flex;gap:5px;align-items:center;font-size:12px;margin:0">'+box(g,it.id,k)+' Tandai</label>';it.el.insertBefore(w,it.el.firstChild);it.el.dataset.bk=g});
+const card=G.cont.closest('.card')||G.cont.parentElement,hasAll=card&&[...card.querySelectorAll('button')].some(x=>/hapus\s+semua|kosongkan/i.test(x.textContent));
+const bar=document.createElement('div');bar.className='row np bkbar';bar.dataset.g=g;
+bar.innerHTML=`<label style="display:flex;align-items:center;gap:7px;flex:0 0 auto;margin:0"><input type="checkbox" class="bkall" style="width:auto;margin:0"> Tandai semua</label><button class="b d s" data-bkact="sel" disabled>🗑 Hapus terpilih (<span class="bkn">0</span>)</button>${hasAll?'':`<button class="b d s" data-bkact="all">🗑 Hapus semua (${G.items.length})</button>`}<button class="b g s" data-bkact="clr">Batal tandai</button>`;
+G.bar=bar;
+if(G.kind=='tr'){const w=G.cont.closest('.tw')||G.cont;w.parentNode.insertBefore(bar,w)}
+else{const d=getComputedStyle(G.cont).display,t=/grid|flex/.test(d)?G.cont:G.items[0].el;t.parentNode.insertBefore(bar,t)}
+refresh(g)})}
+document.addEventListener('change',e=>{const t=e.target;if(!t.classList)return;
+if(t.classList.contains('bkc')){const G=GR[t.dataset.g];if(!G)return;const S=SEL[G.k]||(SEL[G.k]=new Set());t.checked?S.add(t.dataset.id):S.delete(t.dataset.id);refresh(t.dataset.g)}
+else if(t.classList.contains('bkall')){const g=t.closest('.bkbar').dataset.g,G=GR[g];if(!G)return;const S=SEL[G.k]||(SEL[G.k]=new Set());G.items.forEach(i=>t.checked?S.add(i.id):S.delete(i.id));document.querySelectorAll('.bkc[data-g="'+g+'"]').forEach(c=>c.checked=t.checked);refresh(g)}});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-bkact]');if(!b)return;const bar=b.closest('.bkbar'),g=bar&&bar.dataset.g,G=GR[g];if(!G)return;const S=SEL[G.k]||(SEL[G.k]=new Set()),act=b.dataset.bkact;
+if(act=='clr'){G.items.forEach(i=>S.delete(i.id));document.querySelectorAll('.bkc[data-g="'+g+'"]').forEach(c=>c.checked=false);refresh(g);return}
+const ids=G.items.map(i=>i.id).filter(i=>act=='all'||S.has(i));
+if(!ids.length)return alert('Tandai data yang ingin dihapus terlebih dahulu.');
+const noun=G.a.n(G.m),msg='Hapus '+(act=='all'?'SEMUA ':'')+ids.length+' '+noun+(act=='all'?' yang tampil':' yang ditandai')+'? Tindakan ini tidak dapat dibatalkan.';
+if(ids.length>=15||(G.a.big&&G.a.big(G.m))){if((prompt(msg+'\n\nKetik HAPUS untuk melanjutkan.')||'').trim().toUpperCase()!=='HAPUS')return}
+else if(!confirm(msg))return;
+let info='';try{info=G.a.rm(ids,G.m)}catch(x){return alert('Gagal menghapus: '+x.message)}
+ids.forEach(i=>S.delete(i));save();draw();if(info)alert(info)});
+const obs=new MutationObserver(recs=>{if(busy)return;let hit=false;for(const r of recs){const t=r.target;if(t.nodeType!==1||(t.closest&&t.closest('#clk,.bkbar')))continue;if(r.addedNodes.length){hit=true;break}}if(hit){clearTimeout(tm);tm=setTimeout(enh,80)}});
+function enh(){busy=true;try{scan()}catch(e){console.error('bulk',e)}finally{obs.takeRecords();busy=false}}
+obs.observe(document.body,{childList:true,subtree:true});setTimeout(enh,300);
+window.BULK={SEL,GR,enh};
+
+/* ---------- Tempat sampah: tandai, kembalikan terpilih, hapus permanen terpilih, kosongkan ---------- */
+window._abSel=new Set();
+const abIds=()=>[...window._abSel],abIn=a=>'id=in.('+a.map(i=>/^\d+$/.test(i)?i:'"'+i+'"').join(',')+')';
+window.abCnt=function(){const S=window._abSel,n=S.size;document.querySelectorAll('.abx_n').forEach(e=>e.textContent=n);['abx_bk','abx_dl'].forEach(i=>{const e=document.getElementById(i);if(e)e.disabled=!n});const a=document.getElementById('abx_all'),L=(window._abT||[]).length;if(a){a.checked=n>0&&n==L;a.indeterminate=n>0&&n<L}};
+window.abPick=function(id,on){on?window._abSel.add(String(id)):window._abSel.delete(String(id));abCnt()};
+window.abPickAll=function(on){const S=window._abSel;S.clear();if(on)(window._abT||[]).forEach(x=>S.add(String(x.id)));document.querySelectorAll('.abx').forEach(c=>c.checked=on);abCnt()};
+window.abDelSel=async function(){const ids=abIds();if(!ids.length)return alert('Tandai data di tempat sampah terlebih dahulu.');if(!confirm('Hapus permanen '+ids.length+' data dari tempat sampah? Setelah ini tidak bisa dikembalikan.'))return;try{await api('arsip_hapus?'+abIn(ids),{method:'DELETE'});window._abSel.clear();abTrash()}catch(e){alert('Gagal: '+e.message)}};
+window.abBackSel=async function(){const S=window._abSel,rows=(window._abT||[]).filter(x=>S.has(String(x.id)));if(!rows.length)return alert('Tandai data di tempat sampah terlebih dahulu.');if(!confirm('Kembalikan '+rows.length+' data dari tempat sampah?'))return;
+const by={};rows.forEach(r=>(by[r.tabel]=by[r.tabel]||[]).push(r));const okIds=[],bad=[];
+try{if(typeof loadOn=='function')loadOn('Mengembalikan data','Memulihkan '+rows.length+' data dari tempat sampah…');
+for(const t in by){try{await abPut(t,by[t].map(r=>r.data),'tambah');by[t].forEach(r=>okIds.push(String(r.id)))}catch(e){bad.push((AB_N[t]||t)+': '+String(e.message).slice(0,80))}}
+if(okIds.length)await api('arsip_hapus?'+abIn(okIds),{method:'DELETE'});
+okIds.forEach(i=>S.delete(i));await pull();if(typeof loadOff=='function')loadOff();draw();
+alert(okIds.length+' data dikembalikan.'+(bad.length?'\nGagal: '+bad.join('; '):''))}
+catch(e){if(typeof loadOff=='function')loadOff();alert('Gagal mengembalikan: '+e.message)}};
+window.abEmpty=async function(){const f=document.getElementById('ab_tf'),q=f?f.value:'',lb=q?' jenis "'+((AB_N&&AB_N[q])||q)+'"':'';if((prompt('Kosongkan tempat sampah'+lb+'?\nSEMUA data di dalamnya (termasuk yang belum tampil di daftar) akan dihapus permanen dan tidak bisa dikembalikan.\n\nKetik HAPUS untuk melanjutkan.')||'').trim().toUpperCase()!=='HAPUS')return;try{await api('arsip_hapus?'+(q?'tabel=eq.'+encodeURIComponent(q):'id=not.is.null'),{method:'DELETE'});window._abSel.clear();abTrash()}catch(e){alert('Gagal: '+e.message)}};
+abTrash=async function(){const el=$('#ab_t');if(!el)return;const q=($('#ab_tf')||{}).value||'';
+try{const r=await api('arsip_hapus?select=id,tabel,baris_id,data,dihapus_pada'+(q?'&tabel=eq.'+q:'')+'&order=dihapus_pada.desc&limit=100');window._abT=r;const S=window._abSel;[...S].forEach(i=>{if(!r.some(x=>String(x.id)==i))S.delete(i)});
+el.innerHTML=r.length?`<div class="row np bkbar"><span class="mu" style="font-size:12px;flex:0 0 auto">${r.length} data terbaru (maks. 100)</span><button class="b s" id="abx_bk" disabled onclick="abBackSel()">↩ Kembalikan terpilih (<span class="abx_n">0</span>)</button><button class="b d s" id="abx_dl" disabled onclick="abDelSel()">🗑 Hapus permanen terpilih (<span class="abx_n">0</span>)</button><button class="b g s" onclick="abPickAll(false)">Batal tandai</button><button class="b d s" onclick="abEmpty()">🗑 Kosongkan tempat sampah</button></div>`+tbl([`<input type="checkbox" id="abx_all" style="width:auto" title="Tandai semua" onchange="abPickAll(this.checked)">`,'Dihapus','Jenis','Isi',''],r.map(x=>{const d=x.data||{};return[`<input type="checkbox" class="abx" style="width:auto" ${S.has(String(x.id))?'checked':''} onchange="abPick(${x.id},this.checked)">`,new Date(x.dihapus_pada).toLocaleString('id-ID'),esc(AB_N[x.tabel]||x.tabel),esc(String(d.nama||d.judul||d.topik||d.perihal||d.ket||d.room||x.baris_id).slice(0,70)),`<button class="b s" onclick="abBack(${x.id})">Kembalikan</button> <button class="b d s" onclick="abTrashDel(${x.id})">Hapus permanen</button>`]})):'<p class="mu">Tempat sampah kosong.</p>';abCnt()}
+catch(e){el.innerHTML='<p style="color:var(--er)">Tempat sampah belum aktif. Jalankan berkas <b>supabase_backup_pulih.sql</b> di Supabase &gt; SQL Editor.</p>'}};
+})();
 </script>
 <script>if('serviceWorker'in navigator&&location.protocol.indexOf('http')==0)addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){})})</script>
 </body></html>
