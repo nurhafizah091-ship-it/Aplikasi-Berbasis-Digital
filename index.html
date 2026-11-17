@@ -665,8 +665,9 @@ main{padding:12px 12px 16px}
 .mnt-ic{flex:none;width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,#fde68a,#fb923c);box-shadow:0 6px 18px #fb923c66}
 .mnt-ic i{font-style:normal;display:block;line-height:1;animation:mntSpin 6s linear infinite}
 .mnt-tx{flex:1 1 260px;min-width:0}
-.mnt-tx h2{margin:0 0 4px;font-size:clamp(17px,2vw,22px);line-height:1.25;color:#1b2552}
-.mnt-msg{margin:0;min-height:3em;font-size:14px;line-height:1.5;color:#3f4a7a;transition:opacity .35s,transform .35s}
+.mnt-chip{display:inline-block;margin:0 0 6px;padding:3px 12px;border-radius:99px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#7c2d12;background:#fde68a;border:1px solid #f59e0b}
+.mnt-tx h2{margin:0;font:800 clamp(28px,4vw,48px)/1.05 'Baloo 2','Sora',system-ui,sans-serif;letter-spacing:.01em;text-transform:uppercase;background:linear-gradient(90deg,#e11d48,#f97316 45%,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 #1b255214)}
+.mnt-msg{margin:12px 0 0;min-height:3.4em;padding:12px 16px;border-radius:16px;border-left:6px solid #6366f1;background:linear-gradient(90deg,#eef0ff,#f8f4ff);font:600 clamp(19px,2.4vw,28px)/1.35 'Fredoka','Baloo 2','Sora',system-ui,sans-serif;letter-spacing:.01em;color:#3730a3;transition:opacity .35s,transform .35s}
 .mnt-msg.out{opacity:0;transform:translateY(5px)}
 .mnt-note{margin:8px 0 0;padding:7px 12px;border-radius:12px;background:#fff7ed;border:1px dashed #fb923c;font-size:13px;line-height:1.45;color:#7c2d12;text-align:left}
 .mnt-bar{height:7px;border-radius:99px;margin-top:12px;overflow:hidden;background:#e8ecfa}
@@ -682,8 +683,8 @@ main{padding:12px 12px 16px}
 @keyframes mntSlide{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
 @keyframes mntBlink{50%{opacity:.72}}
 @media(prefers-reduced-motion:reduce){.mnt-ic i,.mnt-bar i,#mntbar{animation:none}}
-@media(max-width:700px){.mnt-bn{padding:14px 14px 14px 22px;gap:12px}.mnt-ic{width:46px;height:46px;font-size:24px;border-radius:14px}}
-</style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&display=swap"><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171a52"><link rel="icon" href="./icon-192.png"><link rel="apple-touch-icon" href="./icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ABD Sekolah">
+@media(max-width:700px){.mnt-msg{font-size:18px;padding:10px 12px}.mnt-tx h2{font-size:26px}.mnt-bn{padding:14px 14px 14px 22px;gap:12px}.mnt-ic{width:46px;height:46px;font-size:24px;border-radius:14px}}
+</style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Baloo+2:wght@800&family=Fredoka:wght@600&display=swap"><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#171a52"><link rel="icon" href="./icon-192.png"><link rel="apple-touch-icon" href="./icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ABD Sekolah">
 </head><body><div id="app"></div><div id="m" onclick="if(event.target==this)cm()"></div><div id="pr"></div><div id="cp"></div><div id="dev">Pengembang : <b>Abd. Pandrik Lesi, S.Pd.,Gr.</b> &nbsp;|&nbsp; Versi 2026.5</div>
 <script>
 /* ===== MODE OFFLINE: penyimpanan lokal (IndexedDB), login offline, antrean sinkron ===== */
@@ -2856,12 +2857,12 @@ function mntRender(){
  if(!MNT.on){if(bn)bn.remove();clearInterval(window._mntRot);g.querySelectorAll('.hv-c').forEach(b=>{b.classList.remove('lk');b.removeAttribute('aria-disabled');const o=b.querySelector('.hv-go');if(o&&o.dataset.go){o.textContent=o.dataset.go}});return}
  g.querySelectorAll('.hv-c').forEach(b=>{b.classList.add('lk');b.setAttribute('aria-disabled','true');const o=b.querySelector('.hv-go');if(o){if(!o.dataset.go)o.dataset.go=o.textContent;o.textContent='🔒 Ditutup sementara'}});
  if(!bn){bn=document.createElement('div');bn.id='mntbn';bn.className='mnt-bn';bn.setAttribute('role','status');
-  bn.innerHTML=`<div class="mnt-ic"><i>⚙️</i></div><div class="mnt-tx"><h2>Aplikasi Sedang Dalam Perbaikan</h2><p class="mnt-msg" id="mntmsg" aria-live="polite"></p><div id="mntnote"></div><div class="mnt-bar"><i></i></div></div><button class="mnt-adm" type="button" onclick="mntAdminLogin()">🔐 Akses Admin</button>`;
+  bn.innerHTML=`<div class="mnt-ic"><i>⚙️</i></div><div class="mnt-tx"><span class="mnt-chip">🚧 Mohon maaf atas ketidaknyamanan</span><h2>Aplikasi Sedang Dalam Perbaikan</h2><p class="mnt-msg" id="mntmsg" aria-live="polite"></p><div id="mntnote"></div><div class="mnt-bar"><i></i></div></div><button class="mnt-adm" type="button" onclick="mntAdminLogin()">🔐 Akses Admin</button>`;
   g.parentNode.insertBefore(bn,g)}
  const n=$('#mntnote');if(n)n.innerHTML=MNT.pesan?`<p class="mnt-note">📣 Pesan dari admin: ${esc(MNT.pesan)}</p>`:'';
  const m=$('#mntmsg');if(m&&!m.textContent)m.textContent=mntPick();
  clearInterval(window._mntRot);
- window._mntRot=setInterval(()=>{const e=$('#mntmsg');if(!e){clearInterval(window._mntRot);return}e.classList.add('out');setTimeout(()=>{e.textContent=mntPick();e.classList.remove('out')},350)},6000)}
+ window._mntRot=setInterval(()=>{const e=$('#mntmsg');if(!e){clearInterval(window._mntRot);return}e.classList.add('out');setTimeout(()=>{e.textContent=mntPick();e.classList.remove('out')},350)},7000)}
 function mntApply(){
  mntBar();if(!SB.url)return;
  mntCek(1).then(mntRender);
@@ -2892,7 +2893,7 @@ function mntPage(){
 ${MNT.ok===false?`<div class="card" style="border-color:var(--er);margin:12px 0 0"><b style="color:var(--er)">⚠ Fitur ini belum terpasang di database</b><p class="mu" style="margin:4px 0 0">Buka Supabase &gt; SQL Editor, lalu jalankan file <code>supabase_perbaikan.sql</code> satu kali. Setelah itu muat ulang halaman ini.</p></div>`:''}
 <label style="margin-top:14px">Pesan tambahan dari admin (opsional, tampil di bawah pesan kreatif)<textarea id="mnt_ps" maxlength="240" placeholder="Contoh: Perbaikan diperkirakan selesai pukul 15.00 WITA.">${esc(MNT.pesan)}</textarea></label>
 <div class="row np">${on?`<button class="b" onclick="mntToggle(0)">✅ Buka Kembali Aplikasi</button><button class="b g" onclick="mntToggle(1,1)">💾 Perbarui Pesan</button>`:`<button class="b" style="background:linear-gradient(90deg,#dc2626,#f97316);color:#fff" onclick="mntToggle(1)">🔒 Tutup Aplikasi (Sedang Dalam Perbaikan)</button>`}<button class="b g" onclick="mntTolak()">👁 Pratinjau Pesan</button><button class="b g" onclick="mntCek(1).then(()=>draw())">↻ Segarkan</button></div></div>
-<div class="card"><h3>💬 Pesan kreatif yang ditampilkan bergantian</h3><p class="mu" style="margin:0">Pengguna melihat salah satu pesan ini secara acak, berganti setiap beberapa detik.</p><ul class="mnt-list">${MNT_MSG.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`}
+<div class="card"><h3>💬 Pesan kreatif yang ditampilkan bergantian</h3><p class="mu" style="margin:0">Pengguna melihat salah satu pesan ini secara acak, berganti setiap 7 detik.</p><ul class="mnt-list">${MNT_MSG.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`}
 async function mntToggle(on,keep){
  if(!me||me.role!='admin')return;
  const ps=(($('#mnt_ps')||{}).value||'').trim().slice(0,240);
