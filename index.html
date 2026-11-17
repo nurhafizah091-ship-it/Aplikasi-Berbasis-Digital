@@ -745,29 +745,92 @@ const norm=(t,x)=>{const o=Object.fromEntries(COLS[t].map(c=>[c,x[c]??null]));if
 const mark=t=>{snap[t]=new Map(db[t].map(x=>{const n=norm(t,x);return[n.id,JSON.stringify(n)]}))};
 const badge=(m,e)=>{let b=$('#sync');if(!b){b=document.createElement('div');b.id='sync';b.style.cssText='position:fixed;right:10px;bottom:calc(32px + env(safe-area-inset-bottom,0px));padding:3px 10px;border-radius:99px;font-size:12px;background:var(--sf);border:1px solid var(--bd);z-index:30;pointer-events:none';document.body.appendChild(b)}b.textContent=m;b.style.color=e?'var(--er)':'var(--mu)'};
 async function pull(){
- window.PERR={};MLERR=0;PFE=0;let pi=0;
- await pfProbe();
+ window.PERR={};MLERR=0;PFE=0;
+ const probe=pfProbe();
  const PN=Object.keys(COLS).length;
  loadSet(30,'Memuat data…');
- for(const t in COLS){
-  try{
-   const fields=(LZ[t]?COLS[t].filter(c=>!LZ[t].includes(c)):COLS[t]).join(',');
-   let rows=[],off=0,part=[],pageSize=t==='nilai'?100:500;
-   do{
-    try{
-     part=await api(t+'?select='+fields+'&order=id.asc&limit='+pageSize+'&offset='+off);
-    }catch(pageErr){
-     if(t==='nilai'&&pageSize>20){
-      pageSize=20;
-      part=await api(t+'?select='+fields+'&order=id.asc&limit='+pageSize+'&offset='+off);
-     }else throw pageErr;
+ /* ambil satu tabel: halaman berikutnya diminta paralel (per gelombang) agar tabel besar cepat */
+ /* nilai: baris besar (mis. logo kop TU) sering membuat server 500. Muat baris biasa dulu,
+    baris berat (tu_kop, pl_cal) terpisah, dan bila satu halaman gagal, belah dua sampai baris bermasalah terisolasi & dilewati */
+ const fetchSafe=async(q,off,ps)=>{
+  try{return await api(q+'&limit='+ps+'&offset='+off,{},1,2)||[]}
+  catch(e){
+   if(OFF.isNet(e))throw e;
+   if(ps<=1){window.NILAI_SKIP=(window.NILAI_SKIP||0)+1;return[]}
+   const h=Math.ceil(ps/2),a=await fetchSafe(q,off,h);
+   const b=await fetchSafe(q,off+h,ps-h);
+   return a.concat(b);
+  }
+ };
+ const getNilai=async fields=>{
+  window.NILAI_SKIP=0;
+  const base='nilai?select='+fields+'&order=id.asc',ps=250,W=3;
+  const loop=async(q,size,wave)=>{
+   let rows=[],off=0,done=false;
+   while(!done&&off<20000){
+    const offs=[];for(let i=0;i<wave;i++)offs.push(off+i*size);
+    const parts=await Promise.all(offs.map(o=>fetchSafe(q,o,size)));
+    for(const p of parts){rows=rows.concat(p);if(p.length<size){done=true;break}}
+    off+=wave*size;
+   }
+   return rows;
+  };
+  /* paginasi offset dalam (>5000) membuat server time-out (500). Ganti: bagi tabel menurut huruf awal id
+     (rentang yang berurutan & saling lepas, mencakup semua id), lalu tiap bagian dibaca dengan keyset (id>terakhir), tanpa offset */
+  const B=[...'0123456789abcdefghijklmnopqrstuvwxyz'],flt='&or=(jenis.is.null,jenis.not.in.(tu_kop,pl_cal))';
+  const PR=['id=lt.0',...B.map((c,i)=>i<B.length-1?'id=gte.'+c+'&id=lt.'+B[i+1]:'id=gte.'+c)];
+  const outP=PR.map(()=>[]),qP=PR.map((_,i)=>i);
+  const keyset=async i=>{
+   let last=null,rows=[];
+   for(;;){
+    const sk0=window.NILAI_SKIP||0;
+    const pg=await fetchSafe(base+flt+'&'+PR[i]+(last!=null?'&id=gt.'+encodeURIComponent(last):''),0,ps);
+    if(!pg.length)break;
+    rows=rows.concat(pg);
+    const nl=pg[pg.length-1].id;
+    if(nl===last)break;
+    last=nl;
+    if(pg.length<ps&&(window.NILAI_SKIP||0)===sk0)break;
+   }
+   outP[i]=rows;
+  };
+  await Promise.all([1,2,3,4,5].map(async()=>{while(qP.length){await keyset(qP.shift())}}));
+  const main=[].concat(...outP);
+  let kop=[];try{kop=await loop(base+'&jenis=in.(tu_kop,pl_cal)',2,1)}catch(e){if(OFF.isNet(e))throw e}
+  return main.concat(kop);
+ };
+ const getTable=async t=>{
+  if(t==='pf_user')await probe;
+  if(t==='nilai')return getNilai(COLS.nilai.join(','));
+  const skip=t==='pf_user'?['foto']:(LZ[t]||[]),fields=COLS[t].filter(c=>!skip.includes(c)).join(','),big=t==='nilai',lim=big?20000:50000,W=3;
+  const sizes=big?[250,100,20]:[500];
+  let lastErr;
+  for(const ps of sizes){
+   try{
+    let rows=[],off=0,done=false;
+    while(!done&&off<lim){
+     const offs=[];for(let i=0;i<W&&off+i*ps<lim;i++)offs.push(off+i*ps);
+     const parts=await Promise.all(offs.map(o=>api(t+'?select='+fields+'&order=id.asc&limit='+ps+'&offset='+o)));
+     for(const p of parts){const x=p||[];rows=rows.concat(x);if(x.length<ps){done=true;break}}
+     off+=W*ps;
     }
-    rows=rows.concat(part||[]);
-    off+=pageSize;
-    if(part.length<pageSize)break;
-   }while(off<(t==='nilai'?20000:50000));
-   db[t]=rows.map(x=>{const o={};COLS[t].forEach(c=>{if(x[c]!==null&&x[c]!==undefined)o[c]=x[c]});return o});
-  }catch(e){
+    return rows;
+   }catch(e){lastErr=e}
+  }
+  throw lastErr;
+ };
+ const HV=['nilai','absen','materi_lihat','chat','kumpul','materi','tugas','supervisi','pk_buku'],tabs=[...HV.filter(t=>COLS[t]),...Object.keys(COLS).filter(t=>!HV.includes(t))],res={},errs={};let pi=0;
+ const worker=async()=>{
+  while(tabs.length){
+   const t=tabs.shift();
+   try{res[t]=await getTable(t)}catch(e){errs[t]=e}
+   loadSet(30+65*(++pi)/PN,'Memuat data ('+pi+'/'+PN+')… mohon bersabar');
+  }
+ };
+ await Promise.all([worker(),worker(),worker(),worker(),worker(),worker()]);
+ for(const t in COLS){
+  if(errs[t]){
+   const e=errs[t];
    window.PERR[t]=String((e&&e.message)||e).slice(0,220);
    if(t==='pf_user')PFE=1;
    if(t==='materi_lihat')MLERR=1;
@@ -775,10 +838,12 @@ async function pull(){
    if(['profil','game','jurnal','materi_lihat','supervisi','nilai'].includes(t))db[t]=[];
    else if(/^(pk|pf)_/.test(t))db[t]=[];
    else throw new Error('Gagal memuat tabel "'+t+'": '+String(e.message||e));
+  }else{
+   db[t]=res[t].map(x=>{const o={};COLS[t].forEach(c=>{if(x[c]!==null&&x[c]!==undefined)o[c]=x[c]});return o});
   }
   mark(t);
-  loadSet(30+65*(++pi)/PN,'Memuat data ('+pi+'/'+PN+')… mohon bersabar');
  }
+ if(window.NILAI_SKIP)setTimeout(()=>badge('⚠ '+window.NILAI_SKIP+' baris nilai terlalu besar dan dilewati saat memuat. Hubungi admin.',1),500);
  ACC=me&&me.role==='admin'?await api('profiles?select=id,role,ref_id,nama&limit=1000'):[];
  OFF.dirty(1);
 }
@@ -793,9 +858,9 @@ function loginSB(msg){$('#app').innerHTML=shell(`${KPF?`<h1>🏫 Login Kepala Se
 async function sess(j){TK=j.access_token;RT=j.refresh_token;try{sessionStorage.setItem('rt',RT)}catch(e){}
 const p=(await api('profiles?id=eq.'+j.user.id+'&select=*'))[0];if(!p)throw new Error('Akun belum punya peran. Hubungi admin sekolah.');if(KPF&&p.role!='kepsek')throw new Error('Akun ini bukan akun Kepala Sekolah. Gunakan kartu yang sesuai atau hubungi admin sekolah.');me={role:p.role,id:p.ref_id,nama:p.nama,uid:p.id};await OFF.preSync();await pull();
 if(me.role=='admin'&&Object.values(db).every(a=>!a.length)&&confirm('Database masih kosong. Isi dengan data contoh?')){db=seed();fixDb();Object.keys(COLS).forEach(t=>snap[t]=new Map());await push()}
-badge('✓ Terhubung ke Database');try{SAFEBK.save('muat').then(w=>{if(w&&w.turun)badge('⚠ Data yang dimuat jauh lebih sedikit dari salinan sebelumnya. Jangan mengubah data dulu; periksa menu Cadangan.',1)});SAFEBK.snap()}catch(e){}try{pfPing()}catch(e){}pg=(PLF&&['siswa','guru','kepsek'].includes(me.role))?'pemilos':(KPF&&me.role=='kepsek')?'supervisi':PKF?'pkdash':TUF?(tuOk()?'tudash':(TUF=0,alert('Akun ini belum memiliki akses Tata Usaha. Hubungi admin sekolah.'),'dash')):'dash';PLF=0;KPF=0;draw()}
+badge('✓ Terhubung ke Database');setTimeout(()=>{try{SAFEBK.save('muat').then(w=>{if(w&&w.turun)badge('⚠ Data yang dimuat jauh lebih sedikit dari salinan sebelumnya. Jangan mengubah data dulu; periksa menu Cadangan.',1)});SAFEBK.snap()}catch(e){}},4000);try{pfPing()}catch(e){}pg=(PLF&&['siswa','guru','kepsek'].includes(me.role))?'pemilos':(KPF&&me.role=='kepsek')?'supervisi':PKF?'pkdash':TUF?(tuOk()?'tudash':(TUF=0,alert('Akun ini belum memiliki akses Tata Usaha. Hubungi admin sekolah.'),'dash')):'dash';PLF=0;KPF=0;draw()}
 let WL=0;
-async function doLogin(){if(LD)return;loadOn('Masuk','Memeriksa akun…');loadSet(8);try{let em=$('#em').value.trim();OFF.cu=em.toLowerCase();OFF.cp=$('#pw').value;if(em&&!em.includes('@')){const u=em;em=null;if(KPF){try{em=await plRpc('kepsek_email',{p_nip:u})}catch(x){}}if(!em){try{em=await plRpc('login_email',{p_user:u.toLowerCase()})}catch(x){throw new Error(/PEMILOS/.test(x.message)?'Fungsi login username belum terpasang di database. Jalankan supabase_login_username.sql di SQL Editor.':x.message)}}if(!em)throw new Error(KPF?'NIP atau username tidak terdaftar sebagai Kepala Sekolah':'Username tidak ditemukan. Siswa masuk memakai email lengkap.')}const r=await fetch(SB.url+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SB.key,'Content-Type':'application/json'},body:JSON.stringify({email:em,password:$('#pw').value})});const j=await r.json();if(!r.ok)throw new Error('Email atau kata sandi salah');loadSet(20,'Memuat profil…');await sess(j);try{lgIn();if(me.role=='admin')driveCleanupSoon()}catch(e){}await OFF.setCred();loadSet(100,'Selesai');loadOff();welcome()}catch(e){loadOff();if(OFF.isNet(e)){TK=RT=null;me=null;OFF.login().then(ok=>{if(!ok)loginSB('Tidak ada koneksi internet. Mode offline hanya bisa dipakai oleh akun yang pernah masuk di perangkat ini saat online.')});return}TK=RT=null;me=null;loginSB(e.message)}}
+async function doLogin(){if(LD)return;loadOn('Masuk','Memeriksa akun…');loadSet(8);try{let em=$('#em').value.trim();OFF.cu=em.toLowerCase();OFF.cp=$('#pw').value;if(em&&!em.includes('@')){const u=em;em=null;if(KPF){try{em=await plRpc('kepsek_email',{p_nip:u})}catch(x){}}if(!em){try{em=await plRpc('login_email',{p_user:u.toLowerCase()})}catch(x){throw new Error(/PEMILOS/.test(x.message)?'Fungsi login username belum terpasang di database. Jalankan supabase_login_username.sql di SQL Editor.':x.message)}}if(!em)throw new Error(KPF?'NIP atau username tidak terdaftar sebagai Kepala Sekolah':'Username tidak ditemukan. Siswa masuk memakai email lengkap.')}const r=await fetch(SB.url+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SB.key,'Content-Type':'application/json'},body:JSON.stringify({email:em,password:$('#pw').value})});const j=await r.json();if(!r.ok)throw new Error('Email atau kata sandi salah');loadSet(20,'Memuat profil…');await sess(j);try{lgIn();if(me.role=='admin')driveCleanupSoon()}catch(e){}OFF.setCred();loadSet(100,'Selesai');loadOff();welcome()}catch(e){loadOff();if(OFF.isNet(e)){TK=RT=null;me=null;OFF.login().then(ok=>{if(!ok)loginSB('Tidak ada koneksi internet. Mode offline hanya bisa dipakai oleh akun yang pernah masuk di perangkat ini saat online.')});return}TK=RT=null;me=null;loginSB(e.message)}}
 /* ===== Loading progres ===== */
 let LD=null;
 function loadOn(t,sub,c,ico){let e=$('#ld');if(!e){e=document.createElement('div');e.id='ld';document.body.appendChild(e)}e.innerHTML=`<div class="ldc" style="--c:${c||'#22d3ee'}">${ico?`<div class="ldi">${ico}</div>`:'<div class="ldsp"></div>'}<h3>${t}</h3><p id="ldt">${sub||'Memuat…'}</p><div class="ldb"><i id="ldf"></i></div><b id="ldp">0%</b></div>`;e.style.display='flex';LD={p:0};clearTimeout(window._ldW);window._ldW=setTimeout(()=>{if(LD){loadOff();badge('⚠ Proses terlalu lama. Periksa koneksi lalu coba lagi.',1)}},180000)}
@@ -994,9 +1059,9 @@ const EYE0='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 function togPw(b){const i=document.getElementById('pw');if(!i)return;const h=i.type=='password';i.type=h?'text':'password';b.setAttribute('aria-pressed',h?'true':'false');b.setAttribute('aria-label',h?'Sembunyikan kata sandi':'Tampilkan kata sandi');b.innerHTML=h?EYE1:EYE0}
 const shell=h=>`<div class="lg"><div class="lgl"><div class="lgl-in"><div class="brand">${logo(210)}</div><h2 class="lgh">Administrasi sekolah dalam satu aplikasi</h2><p class="lgs">Pembelajaran, penilaian, dan komunikasi sekolah tersimpan rapi dan dapat diakses sesuai peran masing-masing.</p><div class="lgf">${FEAT.map(f=>`<div class="fc" style="--c:${f[3]}"><i>${f[0]}</i><div><b>${f[1]}</b><span>${f[2]}</span></div></div>`).join('')}</div></div></div><div class="lgr"><div class="lgm">${logo(150)}<p>Administrasi sekolah dalam satu aplikasi</p></div><div class="lc">${h}<p class="lgb"><a href="#" onclick="home();return false">← Kembali ke menu utama</a></p></div></div></div>`;
 const COL=['#34d399','#60a5fa','#a78bfa','#facc15','#fb923c','#22d3ee','#f472b6'],IC={dash:'📊',master:'🗂️',akun:'👤',jadwal:'🗓️',materi:'📚',tugas:'📝',absen:'✅',nilai:'💯',game:'🎮',chat:'💬',info:'📢',kal:'📅',profil:'🏛️',lap:'📈',kelas:'🏫',backup:'💾',jurnal:'📓',peran:'🧑‍🏫',pemilos:'🗳️',pilketos:'🗳️',doksek:'🏫',dokkepsek:'🔐'};
-const MENU={admin:[['dash','Beranda'],['profilku','Profil Saya'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['profil','Profil Sekolah'],['master','Data Master'],['akun','Akun'],['pengguna','Pengguna Aktif'],['peran','Peran Guru'],['erapor','E-Rapor'],['pilketos','PILKETOS'],['jadwal','Jadwal'],['info','Pengumuman'],['kal','Kalender'],['lap','Laporan'],['backup','Backup & Restore']],
+const MENU={admin:[['dash','Beranda'],['profilku','Profil Saya'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['profil','Profil Sekolah'],['master','Data Master'],['akun','Akun'],['pengguna','Pengguna Aktif'],['peran','Peran Guru'],['pilketos','PILKETOS'],['jadwal','Jadwal'],['info','Pengumuman'],['kal','Kalender'],['lap','Laporan'],['backup','Backup & Restore']],
 kepsek:[['dash','Beranda'],['profilku','Profil Saya'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['doksek','Dokumen Sekolah'],['dokkepsek','Dokumen Kepala Sekolah'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pksaya','Pinjaman Saya'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tulap','Laporan TU'],['tukop','Kop Surat'],['supervisi','Dokumen Supervisi Guru'],['pantauperangkat','Perangkat Pembelajaran'],['pantauwk','Wali Kelas'],['pantaugw','Guru Wali'],['lap','Laporan'],['jadwal','Jadwal'],['absen','Absensi'],['jurnal','Jurnal Pembelajaran'],['materi','Materi'],['game','Game Pembelajaran'],['tugas','Tugas'],['nilai','Daftar Nilai'],['chat','Chat'],['info','Pengumuman'],['kal','Kalender'],['pemilos','PEMILOS']],
-guru:[['dash','Beranda'],['profilku','Profil Saya'],['doksek','Dokumen Sekolah'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pksaya','Pinjaman Saya'],['kelas','Kelas & Siswa'],['walikelas','Wali Kelas'],['guruwali','Guru Wali'],['jadwal','Jadwal'],['materi','Materi'],['tugas','Tugas'],['absen','Absensi'],['jurnal','Jurnal Pembelajaran'],['perangkat','Perangkat Pembelajaran'],['dokguru','Dokumen Supervisi'],['nilai','Daftar Nilai'],['erapor','E-Rapor'],['game','Game Pembelajaran'],['chat','Chat'],['info','Pengumuman'],['kal','Kalender'],['lap','Laporan'],['backup','Cadangan'],['pemilos','PEMILOS'],['pilketos','PILKETOS']],
+guru:[['dash','Beranda'],['profilku','Profil Saya'],['doksek','Dokumen Sekolah'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pksaya','Pinjaman Saya'],['kelas','Kelas & Siswa'],['walikelas','Wali Kelas'],['guruwali','Guru Wali'],['jadwal','Jadwal'],['materi','Materi'],['tugas','Tugas'],['absen','Absensi'],['jurnal','Jurnal Pembelajaran'],['perangkat','Perangkat Pembelajaran'],['dokguru','Dokumen Supervisi'],['nilai','Daftar Nilai'],['game','Game Pembelajaran'],['chat','Chat'],['info','Pengumuman'],['kal','Kalender'],['lap','Laporan'],['backup','Cadangan'],['pemilos','PEMILOS'],['pilketos','PILKETOS']],
 siswa:[['dash','Beranda'],['profilku','Profil Saya'],['tudash','Beranda TU'],['tusm','Surat Masuk'],['tusk','Surat Keluar'],['tucetak','Cetak Surat'],['tuarsip','Arsip Dokumen'],['tusiswa','Data Siswa TU'],['tupegawai','Data Pegawai'],['tulap','Laporan TU'],['tukop','Kop Surat'],['pkpinjam','Sirkulasi Buku'],['pkanggota','Data Anggota'],['pkdok','Dokumen Perpustakaan'],['pklap','Laporan Pustaka'],['pkdash','Ringkasan Pustaka'],['pkbuku','Katalog Buku'],['pksaya','Pinjaman Saya'],['pemilos','PEMILOS'],['jadwal','Jadwal'],['materi','Materi'],['tugas','Tugas'],['absen','Absensi'],['game','Game Pembelajaran'],['chat','Chat'],['info','Pengumuman'],['kal','Kalender']]};
 const myKelas=()=>db.siswa.find(s=>s.id==me.id)?.kelas;
 
@@ -1169,7 +1234,7 @@ const CIC={'Supervisi':()=>ICS.supervisi(),'PEMILOS':()=>ICS.pemilos(),'Pengatur
 'Pembelajaran':()=>ICS.materi(),'Komunikasi':()=>ICS.chat(),'Laporan & Data':()=>ICS.lap(),'Administrasi':()=>ICS.dokpend(),'Perpustakaan':()=>`<svg viewBox="0 0 24 24"><path d="M4 4h6a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2H4z" fill="#34d399"/><path d="M20 4h-6a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2H20z" fill="#6ee7b7"/></svg>`};
 const ico=(k,on)=>k=='dash'?ICS.dash(on?'#fff':'#3b9bff'):ICS[k]?ICS[k]():(IC[k]||'•');
 const BRAND=LOGOFX(`<img src="${LOGO}" alt="ABD - Administrasi Berbasis Digital" style="width:150px;max-width:100%;height:auto;display:block">`);
-const CATS=[['',['dash']],['',['pantauwk']],['',['pantaugw']],['Supervisi',['supervisi','pantauperangkat']],['Akademik',['kelas','walikelas','guruwali','jadwal','kal']],['Pembelajaran',['absen','jurnal','materi','tugas','nilai','game','perangkat','dokguru']],['',['erapor']],['Administrasi',['doksek']],['Komunikasi',['chat','info']],['PEMILOS',['pemilos','pilketos']],['Tata Usaha',['tudash','tusm','tusk','tucetak','tuarsip','tusiswa','tupegawai','tulap','tukop']],['Perpustakaan',['pkdash','pkbuku','pkpinjam','pkanggota','pkdok','pksaya','pklap']],['Laporan & Data',['lap','backup']],['Pengaturan',['profilku','profil','master','akun','pengguna','peran']]];
+const CATS=[['',['dash']],['',['pantauwk']],['',['pantaugw']],['Supervisi',['supervisi','pantauperangkat']],['Akademik',['kelas','walikelas','guruwali','jadwal','kal']],['Pembelajaran',['absen','jurnal','materi','tugas','nilai','game','perangkat','dokguru']],['Administrasi',['doksek']],['Komunikasi',['chat','info']],['PEMILOS',['pemilos','pilketos']],['Tata Usaha',['tudash','tusm','tusk','tucetak','tuarsip','tusiswa','tupegawai','tulap','tukop']],['Perpustakaan',['pkdash','pkbuku','pkpinjam','pkanggota','pkdok','pksaya','pklap']],['Laporan & Data',['lap','backup']],['Pengaturan',['profilku','profil','master','akun','pengguna','peran']]];
 const CATS_KS=[['',['dash']],['Akademik',['kelas','walikelas','guruwali','jadwal','kal']],['Administrasi',['doksek','dokkepsek']],['Supervisi',['supervisi','pantauperangkat']],['Pembelajaran',['absen','jurnal','materi','tugas','nilai','game','perangkat','dokguru']],['',['pantauwk']],['',['pantaugw']],['Komunikasi',['chat','info']],['PEMILOS',['pemilos']],['Laporan & Data',['lap','backup']],['Pengaturan',['profilku','profil','master','akun','pengguna','peran']],['Tata Usaha',['tudash','tusm','tusk','tucetak','tuarsip','tusiswa','tupegawai','tulap','tukop']],['Perpustakaan',['pkdash','pkbuku','pkpinjam','pkanggota','pkdok','pksaya','pklap']]];
 function CT(){return me&&me.role=='kepsek'?CATS_KS:CATS}
 function navHTML(){pfApply();const M=MENU[me.role].filter(menuOk);return CT().map(([c,ks],i)=>{const it=ks.map(k=>M.find(m=>m[0]==k)).filter(Boolean);if(!it.length)return'';
@@ -1841,7 +1906,7 @@ if(!r.ok){let t='';try{t=(await r.json()).msg||''}catch(x){}throw new Error(t||'
 cm();alert('Berhasil disimpan.'+(cE?'\nEmail masuk Anda sekarang: '+shownEm(me.role,e):'')+(cP?'\nGunakan kata sandi baru saat masuk berikutnya.':''))
 }catch(x){er(x.message+(cE?' (Ubah email memerlukan Edge Function buat-akun versi terbaru.)':''))}}
 /* ===== PEMILOS / PILKETOS ===== */
-const isKpus=()=>!!me&&(me.role=='admin'||db.nilai.some(x=>x.jenis=='eg_role'&&x.siswa==me.id&&x.ket=='pustaka|-'&&x.tahun==TH)),menuOk=m=>{const k=m[0];if(k=='erapor')return me.role=='admin'||me.role=='guru';if(/^pk/.test(k))return PKF&&((k!='pkpinjam'&&k!='pkanggota')||isKpus())&&((k!='pklap'&&k!='pkdok')||isKpus()||me.role=='kepsek');if(/^tu(dash|sm|sk|cetak|arsip|siswa|pegawai|lap|kop)$/.test(k))return TUF&&(k=='tudash'||k=='tusm'||k=='tulap'||tuRW());if(k=='dokkepsek')return !PKF&&!TUF&&me.role=='kepsek';if(k=='doksek')return !PKF&&(TUF?(me.role!='kepsek'&&isTU()):(me.role=='kepsek'||me.role=='guru'));if(PKF||TUF)return false;if(k=='walikelas')return me.role=='guru'&&isWK();if(k=='guruwali')return me.role=='guru';return k!='pilketos'||isPemb()};
+const isKpus=()=>!!me&&(me.role=='admin'||db.nilai.some(x=>x.jenis=='eg_role'&&x.siswa==me.id&&x.ket=='pustaka|-'&&x.tahun==TH)),menuOk=m=>{const k=m[0];if(k=='erapor')return false;if(/^pk/.test(k))return PKF&&((k!='pkpinjam'&&k!='pkanggota')||isKpus())&&((k!='pklap'&&k!='pkdok')||isKpus()||me.role=='kepsek');if(/^tu(dash|sm|sk|cetak|arsip|siswa|pegawai|lap|kop)$/.test(k))return TUF&&(k=='tudash'||k=='tusm'||k=='tulap'||tuRW());if(k=='dokkepsek')return !PKF&&!TUF&&me.role=='kepsek';if(k=='doksek')return !PKF&&(TUF?(me.role!='kepsek'&&isTU()):(me.role=='kepsek'||me.role=='guru'));if(PKF||TUF)return false;if(k=='walikelas')return me.role=='guru'&&isWK();if(k=='guruwali')return me.role=='guru';return k!='pilketos'||isPemb()};
 const isPemb=()=>!!me&&(me.role=='admin'||db.nilai.some(x=>x.jenis=='eg_role'&&x.siswa==me.id&&x.ket=='osis|-'&&x.tahun==TH));
 const plJ=(r,d)=>{try{return{...d,...JSON.parse(r)}}catch(e){return d}};
 const plCfg=()=>{const r=db.nilai.find(x=>x.jenis=='pl_cfg'&&x.tahun==TH);return plJ(r&&r.ket,{})&&{judul:'Pemilihan Ketua & Wakil Ketua OSIS',status:'draft',umum:false,...plJ(r&&r.ket,{})}};
@@ -1867,7 +1932,7 @@ db.nilai.push(plRow('pl_pilih',me.id,'-'),plRow('pl_suara','-',id));save();draw(
 function plSet(){const c=plCfg();c.judul=($('#pl_j').value.trim()||c.judul);c.status=$('#pl_s').value;c.umum=$('#pl_u').checked;
 const r=db.nilai.find(x=>x.jenis=='pl_cfg'&&x.tahun==TH),ket=JSON.stringify(c);
 if(r)r.ket=ket;else{const n=plRow('pl_cfg','-',ket);n.guru=me.role=='guru'?me.id:null;db.nilai.push(n)}save();draw();alert('Setelan disimpan.')}
-async function plFoto(f,ok,sz){if(!f)return ok(null);if(!/^image\//.test(f.type)){alert('Pilih berkas gambar.');return ok(null)}try{badge('Mengunggah foto calon ke database…');const marker=await driveUploadFile(f),meta=driveMeta(marker);if(!meta)throw new Error('Metadata berkas tidak valid.');badge('✓ Foto calon tersimpan; referensinya tercatat di database');driveCleanupSoon();ok(await pickImgFile(meta.fileId,f,sz||512,'image/jpeg'))}catch(e){badge('⚠ Unggah foto calon gagal',1);alert('Gagal mengunggah foto calon ke database: '+e.message);ok(null)}}
+async function plFoto(f,ok,sz){if(!f)return ok(null);if(!/^image\//.test(f.type)){alert('Pilih berkas gambar.');return ok(null)}try{badge('Mengunggah foto calon ke database…');const marker=await driveUploadFile(f),meta=driveMeta(marker);if(!meta)throw new Error('Metadata berkas tidak valid.');badge('✓ Foto calon tersimpan; referensinya tercatat di database');driveCleanupSoon();ok(await pickImg(meta.fileId,driveImageUrl(meta.fileId)))}catch(e){badge('⚠ Unggah foto calon gagal',1);alert('Gagal mengunggah foto calon ke database: '+e.message);ok(null)}}
 function plCalForm(id){const c=id?plCal().find(x=>x.id==id):null;
 form(id?'Ubah calon':'Tambah calon',[['no','Nomor urut','number'],['ketua','Calon Ketua OSIS','text'],['wakil','Calon Wakil Ketua OSIS','text'],['fp','Foto Pasangan Calon (1 foto, ketua &amp; wakil berdampingan)'+(c&&(c.fp||c.fk||c.fw)?' (kosongkan bila tidak diganti)':''),'file'],['visi','Visi','textarea'],['misi','Misi','textarea']],v=>{
 const no=parseInt(v.no)||0,ketua=v.ketua.trim(),wakil=v.wakil.trim();
@@ -2404,7 +2469,7 @@ const o=(role=='siswa'?db.siswa:db.guru).find(x=>x.id==ref);if(!o)return null;
 const idn=String(role=='siswa'?o.nis:o.nip||'').trim(),nn=String(o.nama||'').trim().toLowerCase(),C=L.filter(x=>x.role==role&&!(x.ref&&x.ref!=ref));
 if(idn){r=C.find(x=>String(x.nip||'').trim()==idn);if(r)return r}
 const M=nn?C.filter(x=>String(x.nama||'').trim().toLowerCase()==nn):[];return M.length==1?M[0]:null}
-async function pfProbe(){if(!SB.url)return;for(const c of ['seen','ref']){if(COLS.pf_user.includes(c))continue;try{await api('pf_user?select='+c+'&limit=1');COLS.pf_user.push(c)}catch(e){}}}
+async function pfProbe(){if(!SB.url)return;const cs=['seen','ref'].filter(c=>!COLS.pf_user.includes(c));const ok=await Promise.all(cs.map(c=>api('pf_user?select='+c+'&limit=1').then(()=>1,()=>0)));cs.forEach((c,i)=>{if(ok[i]&&!COLS.pf_user.includes(c))COLS.pf_user.push(c)})}
 function pfPing(){try{lgBeat()}catch(e){}if(!me||!me.uid||!SB.url||(window._rlsDeny&&window._rlsDeny.pf_user))return;if(PFE){pfReload().then(()=>{if(!PFE)pfPing()});return}const S=COLS.pf_user.includes('seen'),R0=COLS.pf_user.includes('ref');if(!S&&!R0)return;const r=pfEnsure(),clean=snap.pf_user&&snap.pf_user.get(r.id)===JSON.stringify(norm('pf_user',r));if(S)r.seen=new Date().toISOString();if(R0&&me.id)r.ref=me.id;if(clean&&TK){const pb={};if(S)pb.seen=r.seen;if(R0&&me.id)pb.ref=r.ref;api('pf_user?id=eq.'+encodeURIComponent(r.id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(pb)}).then(()=>{snap.pf_user.set(r.id,JSON.stringify(norm('pf_user',r)))}).catch(()=>save());return}save()}
 setInterval(()=>{try{if(me&&me.uid&&document.visibilityState=='visible'&&navigator.onLine)pfPing()}catch(e){}},300000);
 const spOn=iso=>{const t=Date.parse(iso||'');return !!t&&Date.now()-t<=10*60000};
@@ -3229,6 +3294,7 @@ async function doCatch(light){
   for(const t of T){try{await syncTable(t)}catch(e){if(OFF.isNet(e))break}}
 }
 function catchUp(light){
+  if(window.PULLING)return;
   if(!light){const n=Date.now();if(n-lastFull<20000)return;lastFull=n}
   busy=busy.then(()=>doCatch(light)).catch(()=>{});
 }
@@ -3264,7 +3330,7 @@ function onJoined(){
   else if(gap>10000)catchUp(false);
 }
 function connect(){
-  if(ws||!meN()||!TK)return;
+  if(ws||!meN()||!TK||window.PULLING)return;
   let w;try{w=new WebSocket(WSU)}catch(e){sched();return}
   ws=w;uidOn=meN().uid;
   w.onopen=()=>{
@@ -3322,7 +3388,24 @@ document.addEventListener('visibilitychange',()=>{
   if(pend&&safe())flush();
 });
 addEventListener('online',()=>{if(!meN())return;retry=0;if(ws&&ws.readyState!==1)drop();clearTimeout(rtT);rtT=null;if(!ws)connect()});
-if(typeof pull==='function'){const p0=pull;pull=async function(){const r=await p0.apply(this,arguments);lastPull=Date.now();return r}}
+if(typeof pull==='function'){const p0=pull;pull=async function(){window.PULLING=(window.PULLING||0)+1;try{const r=await p0.apply(this,arguments);setTimeout(pfFotoBg,300);return r}finally{window.PULLING--;lastPull=Date.now()}}}
+/* foto profil (besar) dimuat setelah dashboard tampil, per 40 baris, lalu tampilan disegarkan sekali */
+let _pfFB=0;
+async function pfFotoBg(){
+  if(_pfFB||!SB.url||!me||!TK)return;_pfFB=1;
+  try{
+    let off=0,n=0;const uid0=me.uid;
+    for(;;){
+      if(!me||me.uid!==uid0)return;
+      const rows=await api('pf_user?select=id,foto&foto=not.is.null&order=id.asc&limit=40&offset='+off);
+      if(!rows||!rows.length)break;
+      rows.forEach(r=>{if(r.foto){upsert('pf_user',{id:r.id,foto:r.foto},true);n++}});
+      if(rows.length<40)break;off+=40;
+    }
+    if(n&&me&&me.uid===uid0&&!LD)redraw();
+  }catch(e){console.warn('Foto profil belum termuat:',e&&e.message)}
+  finally{_pfFB=0}
+}
 window.rtSync=()=>catchUp(false);
 window.rtStatus=()=>({terhubung:joined,socket:ws?ws.readyState:null,cadangan:sysErr});
 })();
